@@ -1,16 +1,22 @@
 :root {
-    --primary-color: #FFB347; /* 溫暖的橘黃色 */
-    --secondary-color: #77DD77; /* 柔和的綠色 */
-    --accent-color: #AEC6CF; /* 寶寶藍 */
-    --wrong-color: #FF6961; /* 柔和的紅色 */
+    --primary-color: #FFB347;
+    /* 溫暖的橘黃色 */
+    --secondary-color: #77DD77;
+    /* 柔和的綠色 */
+    --accent-color: #AEC6CF;
+    /* 寶寶藍 */
+    --wrong-color: #FF6961;
+    /* 柔和的紅色 */
     --text-color: #444;
-    --bg-color: #FEF9E7; /* 米黃色護眼背景 */
+    --bg-color: #FEF9E7;
+    /* 米黃色護眼背景 */
     --card-bg: #FFFFFF;
 }
 
 * {
     box-sizing: border-box;
-    user-select: none; /* 防止小孩長按選取文字 */
+    user-select: none;
+    /* 防止小孩長按選取文字 */
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -23,7 +29,8 @@ body {
     height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* 防止捲動 */
+    overflow: hidden;
+    /* 防止捲動 */
 }
 
 /* 通用容器 */
@@ -56,15 +63,22 @@ body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* 卡片樣式 */
 .card {
     background: var(--card-bg);
     border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     padding: 40px;
     width: 100%;
     max-height: 70vh;
@@ -91,7 +105,8 @@ body {
 }
 
 .answer-area {
-    display: none; /* 預設隱藏答案 */
+    display: none;
+    /* 預設隱藏答案 */
     margin-top: 30px;
     padding-top: 30px;
     border-top: 2px dashed #ddd;
@@ -118,7 +133,7 @@ body {
     transition: transform 0.1s, box-shadow 0.1s;
     margin: 10px;
     font-family: inherit;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
 }
 
 .btn:active {
@@ -126,10 +141,25 @@ body {
     box-shadow: none;
 }
 
-.btn-primary { background-color: var(--primary-color); color: white; }
-.btn-success { background-color: var(--secondary-color); color: white; }
-.btn-danger { background-color: var(--wrong-color); color: white; }
-.btn-neutral { background-color: var(--accent-color); color: white; }
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-success {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-danger {
+    background-color: var(--wrong-color);
+    color: white;
+}
+
+.btn-neutral {
+    background-color: var(--accent-color);
+    color: white;
+}
 
 /* 底部控制列 */
 .controls {
@@ -175,7 +205,68 @@ h1 {
 
 /* 平板直式優化 */
 @media (orientation: portrait) {
-    .question-text { font-size: 4rem; }
-    .btn { width: 100%; margin: 5px 0; }
-    .controls { flex-direction: column; }
+    .question-text {
+        font-size: 4rem;
+    }
+
+    .btn {
+        width: 100%;
+        margin: 5px 0;
+    }
+
+    .controls {
+        flex-direction: column;
+    }
+}
+
+/* 題目列表樣式 */
+.question-list {
+    width: 100%;
+    height: 50vh;
+    overflow-y: auto;
+    background: white;
+    border-radius: 15px;
+    padding: 10px;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+    border: 2px solid #eee;
+}
+
+.q-item {
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.q-item:last-child {
+    border-bottom: none;
+}
+
+.q-item:hover {
+    background-color: #f9f9f9;
+}
+
+.q-item-id {
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-right: 10px;
+}
+
+.q-item-text {
+    color: #555;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.q-item-stats {
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: 4px;
+    margin-left: 20px;
+    /* Indent slightly to align with text */
 }

@@ -178,12 +178,82 @@ function goHome() {
     showPage('home-page');
 }
 
+// --- 6. 家長專區邏輯 ---
+function openSettings() {
+    showPage('settings-page');
+    renderQuestionList();
+}
+
+function renderQuestionList() {
+    const listContainer = document.getElementById('question-list');
+    listContainer.innerHTML = ''; // 清空
+
+    // 顯示所有 "已導入" 的題目。
+    cards.sort((a, b) => a.id - b.id).forEach(card => {
+        const item = document.createElement('div');
+        item.className = 'q-item';
+        // 移除 HTML 標籤以純文字顯示預覽
+        const rawText = card.q.replace(/<[^>]*>?/gm, '');
+
+        // 格式化時間
+        let nextReviewText = "尚未開始";
+        const now = Date.now();
+        if (card.nextReview > 0) {
+            const date = new Date(card.nextReview);
+            // 簡單格式：MM/DD HH:mm
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const hour = date.getHours().toString().padStart(2, '0');
+            const minute = date.getMinutes().toString().padStart(2, '0');
+
+            nextReviewText = `${month}/${day} ${hour}:${minute}`;
+
+            if (card.nextReview <= now) {
+                nextReviewText = `<span style="color:var(--wrong-color); font-weight:bold;">${nextReviewText} (已到期)</span>`;
+            }
+        }
+
+        item.innerHTML = `
+            <div style="flex: 1; min-width: 0;">
+                <div>
+                    <span class="q-item-id">#${card.id}</span>
+                    <span class="q-item-text">${rawText}</span>
+                </div>
+                <div class="q-item-stats">
+                    複習: ${card.reps} 次 | 下次: ${nextReviewText}
+                </div>
+            </div>
+            <div style="color: #ccc; margin-left: 10px;">ᐳ</div>
+        `;
+        item.onclick = () => previewQuestion(card.id);
+        listContainer.appendChild(item);
+    });
+}
+
+function previewQuestion(id) {
+    const card = cards.find(c => c.id === id);
+    if (!card) return;
+
+    document.getElementById('preview-q').innerHTML = card.q;
+    document.getElementById('preview-a-text').innerText = card.a;
+    document.getElementById('preview-exp').innerHTML = card.exp || "無說明";
+
+    showPage('preview-page');
+}
+
+function backToSettings() {
+    showPage('settings-page');
+}
+
 // Expose functions to window for HTML onclick events
 window.startSession = startSession;
 window.clearDataConfirm = clearDataConfirm;
 window.showAnswer = showAnswer;
 window.rateCard = rateCard;
 window.goHome = goHome;
+window.openSettings = openSettings;
+window.previewQuestion = previewQuestion;
+window.backToSettings = backToSettings;
 
 // 啟動
 initApp();

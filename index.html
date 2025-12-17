@@ -23,8 +23,8 @@
                 今天有 <span id="due-count" style="color: var(--wrong-color); font-weight: bold;">0</span> 題需要複習喔
             </p>
             <button class="btn btn-primary" onclick="startSession()">開始練習</button>
-            <button class="btn btn-neutral" onclick="clearDataConfirm()"
-                style="margin-top:20px; font-size: 1rem; padding: 10px 20px; opacity: 0.7;">家長設定：重置進度</button>
+            <button class="btn btn-neutral" onclick="openSettings()"
+                style="margin-top:20px; font-size: 1rem; padding: 10px 20px; opacity: 0.7;">家長專區 👨‍👩‍👧‍👦</button>
         </div>
     </div>
 
@@ -68,6 +68,43 @@
                     太簡單了 🤩<br><span style="font-size:0.8rem">4天後</span>
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- 家長專區頁面 -->
+    <div id="settings-page" class="page">
+        <div class="container">
+            <h1>家長專區</h1>
+
+            <div
+                style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #666;">題目列表</h2>
+                <button class="btn btn-danger" onclick="clearDataConfirm()"
+                    style="font-size: 0.9rem; padding: 8px 15px;">重置所有進度</button>
+            </div>
+
+            <div id="question-list" class="question-list">
+                <!-- 題目列表將由 JS 產生 -->
+            </div>
+
+            <button class="btn btn-neutral" onclick="goHome()" style="margin-top: 20px;">回首頁</button>
+        </div>
+    </div>
+
+    <!-- 題目預覽頁面 -->
+    <div id="preview-page" class="page">
+        <div class="container">
+            <h2>題目預覽</h2>
+
+            <div class="card" style="max-height: 60vh;">
+                <div id="preview-q" class="question-text"></div>
+                <div id="preview-a" class="answer-area" style="display: block; margin-top: 20px;">
+                    <strong>答案：</strong> <span id="preview-a-text"></span>
+                </div>
+                <div id="preview-exp" class="explanation"></div>
+            </div>
+
+            <button class="btn btn-neutral" onclick="backToSettings()">返回列表</button>
         </div>
     </div>
 
