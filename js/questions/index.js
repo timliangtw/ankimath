@@ -4,6 +4,7 @@ import q003 from './q003.js';
 import q004 from './q004.js';
 import q005 from './q005.js';
 import q006 from './q006.js';
+import q007 from './q007.js';
 
 const questions = [
     q001,
@@ -11,7 +12,8 @@ const questions = [
     q003,
     q004,
     q005,
-    q006
+    q006,
+    q007
 ];
 
 export default questions;
