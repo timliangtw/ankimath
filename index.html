@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>數學快樂學 - Anki 兒童版</title>
+    <!-- 引入可愛的圓體字型 -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #FFB347; /* 溫暖的橘黃色 */
+            --secondary-color: #77DD77; /* 柔和的綠色 */
+            --accent-color: #AEC6CF; /* 寶寶藍 */
+            --wrong-color: #FF6961; /* 柔和的紅色 */
+            --text-color: #444;
+            --bg-color: #FEF9E7; /* 米黃色護眼背景 */
+            --card-bg: #FFFFFF;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none; /* 防止小孩長按選取文字 */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* 防止捲動 */
+        }
+
+        /* 通用容器 */
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* 隱藏頁面 */
+        .page {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 卡片樣式 */
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 100%;
+            max-height: 70vh;
+            overflow-y: auto;
+            text-align: center;
+            border: 4px solid var(--accent-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .question-text {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .hint-text {
+            font-size: 1.5rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .answer-area {
+            display: none; /* 預設隱藏答案 */
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px dashed #ddd;
+            width: 100%;
+        }
+
+        .explanation {
+            font-size: 1.4rem;
+            color: #2c3e50;
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        /* 按鈕樣式 */
+        .btn {
+            border: none;
+            border-radius: 50px;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            margin: 10px;
+            font-family: inherit;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-success { background-color: var(--secondary-color); color: white; }
+        .btn-danger { background-color: var(--wrong-color); color: white; }
+        .btn-neutral { background-color: var(--accent-color); color: white; }
+
+        /* 底部控制列 */
+        .controls {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* 標題與裝飾 */
+        h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            text-shadow: 2px 2px 0px #fff;
+            margin-bottom: 30px;
+        }
+
+        .mascot {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        /* 數據與設置區 */
+        .stats-bar {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 1rem;
+            color: #888;
+        }
+        
+        .reset-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 20px;
+            font-size: 0.8rem;
+            background: none;
+            border: none;
+            color: #bbb;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        /* 平板直式優化 */
+        @media (orientation: portrait) {
+            .question-text { font-size: 4rem; }
+            .btn { width: 100%; margin: 5px 0; }
+            .controls { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 主選單頁面 -->
+    <div id="home-page" class="page active">
+        <div class="container">
+            <div class="mascot">🦁</div>
+            <h1>數學挑戰時間！</h1>
+            <p style="font-size: 1.5rem; color: #666; margin-bottom: 40px;">
+                今天有 <span id="due-count" style="color: var(--wrong-color); font-weight: bold;">0</span> 題需要複習喔
+            </p>
+            <button class="btn btn-primary" onclick="startSession()">開始練習</button>
+            <button class="btn btn-neutral" onclick="clearDataConfirm()" style="margin-top:20px; font-size: 1rem; padding: 10px 20px; opacity: 0.7;">家長設定：重置進度</button>
+        </div>
+    </div>
+
+    <!-- 學習頁面 -->
+    <div id="study-page" class="page">
+        <div class="container">
+            <div class="stats-bar">
+                剩餘題目: <span id="remaining-count">0</span>
+            </div>
+
+            <!-- 卡片區域 -->
+            <div class="card">
+                <div id="card-content">
+                    <!-- 題目將會顯示在這裡 -->
+                </div>
+
+                <div id="answer-section" class="answer-area">
+                    <div id="answer-content">
+                        <!-- 答案將會顯示在這裡 -->
+                    </div>
+                    <div class="explanation" id="explanation-content">
+                        <!-- 教學說明 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 控制按鈕區 -->
+            <div class="controls" id="show-answer-btn-area">
+                <button class="btn btn-primary" onclick="showAnswer()">看答案 👀</button>
+            </div>
+
+            <!-- 評分按鈕區 (顯示答案後出現) -->
+            <div class="controls" id="rating-btns-area" style="display: none;">
+                <button class="btn btn-danger" onclick="rateCard(1)">
+                    再練習 😟<br><span style="font-size:0.8rem">1分鐘後</span>
+                </button>
+                <button class="btn btn-primary" onclick="rateCard(3)">
+                    還可以 🤔<br><span style="font-size:0.8rem">明天</span>
+                </button>
+                <button class="btn btn-success" onclick="rateCard(5)">
+                    太簡單了 🤩<br><span style="font-size:0.8rem">4天後</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 完成頁面 -->
+    <div id="finish-page" class="page">
+        <div class="container">
+            <div class="mascot">🎉</div>
+            <h1>太棒了！</h1>
+            <p style="font-size: 1.5rem;">今天的複習都完成了！</p>
+            <button class="btn btn-primary" onclick="goHome()">回首頁</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. 題目資料庫 (您可以之後慢慢增加這裡的內容) ---
+        // id: 唯一識別碼
+        // q: 題目 (支援 HTML)
+        // a: 答案
+        // exp: 教學/解釋
+        const defaultQuestions = [
+            {
+                id: 1,
+                q: "2 + 3 = ?",
+                a: "5",
+                exp: "試著數數看：🍎🍎 加上 🍎🍎🍎 等於 5 顆蘋果！"
+            },
+            {
+                id: 2,
+                q: "10 - 4 = ?",
+                a: "6",
+                exp: "你有 10 顆糖果，吃掉了 4 顆，剩下 6 顆。"
+            },
+            {
+                id: 3,
+                q: "5 x 2 = ?",
+                a: "10",
+                exp: "這就像是有 2 堆積木，每堆有 5 個。<br>5 + 5 = 10。"
+            },
+            {
+                id: 4,
+                q: "哪一個數字比較大？<br> 8 還是 12",
+                a: "12",
+                exp: "12 是二位數，8 是一位數。<br>12 比 8 多了 4。"
+            },
+            {
+                id: 5,
+                q: "鐘面上的長針指著 12，短針指著 3。<br>現在是幾點？",
+                a: "3 點鐘",
+                exp: "短針是時針，長針是分針。<br>分針在 12 代表整點。"
+            }
+        ];
+
+        // --- 2. 應用程式狀態 ---
+        let cards = [];
+        let sessionQueue = []; // 當前學習隊列
+        let currentCard = null;
+
+        // --- 3. 核心邏輯 (Local Storage & Anki 簡易演算法) ---
+
+        // 初始化
+        function initApp() {
+            loadData();
+            updateHomeStats();
+        }
+
+        // 讀取資料
+        function loadData() {
+            const storedData = localStorage.getItem('ankiMathKids_v1');
+            if (storedData) {
+                cards = JSON.parse(storedData);
+                // 檢查是否有新題目加入 (簡單的 id 比對)
+                defaultQuestions.forEach(q => {
+                    if (!cards.find(c => c.id === q.id)) {
+                        // 初始化新卡片
+                        cards.push({
+                            ...q,
+                            interval: 0,
+                            reps: 0,
+                            ef: 2.5, // 輕鬆度係數 (Ease Factor)
+                            nextReview: 0 // 時間戳
+                        });
+                    }
+                });
+            } else {
+                // 第一次使用
+                cards = defaultQuestions.map(q => ({
+                    ...q,
+                    interval: 0,
+                    reps: 0,
+                    ef: 2.5,
+                    nextReview: 0
+                }));
+            }
+            saveData();
+        }
+
+        // 存檔
+        function saveData() {
+            localStorage.setItem('ankiMathKids_v1', JSON.stringify(cards));
+        }
+
+        // 清除資料
+        function clearDataConfirm() {
+            if(confirm("確定要清除所有學習進度嗎？小孩的複習紀錄會歸零喔！")) {
+                localStorage.removeItem('ankiMathKids_v1');
+                location.reload();
+            }
+        }
+
+        // 更新首頁數字
+        function updateHomeStats() {
+            const now = Date.now();
+            const due = cards.filter(c => c.nextReview <= now).length;
+            document.getElementById('due-count').innerText = due;
+        }
+
+        // --- 4. 學習流程控制 ---
+
+        function startSession() {
+            const now = Date.now();
+            // 找出所有到期或還沒學過的卡片
+            sessionQueue = cards.filter(c => c.nextReview <= now);
+            
+            if (sessionQueue.length === 0) {
+                // 如果沒有到期的，可以練習一些未來的，或是隨機選幾題複習 (這裡我們先簡單處理：直接顯示完成)
+                // 為了讓展示有趣，如果全部做完了，就抓最早複習的那幾題進來
+                 alert("目前沒有到期的題目，但我們還是來練習一下吧！");
+                 sessionQueue = [...cards].sort((a,b) => a.nextReview - b.nextReview).slice(0, 5);
+            }
+
+            if (sessionQueue.length > 0) {
+                showPage('study-page');
+                loadNextCard();
+            } else {
+                showPage('finish-page');
+            }
+        }
+
+        function loadNextCard() {
+            if (sessionQueue.length === 0) {
+                showPage('finish-page');
+                updateHomeStats();
+                return;
+            }
+
+            currentCard = sessionQueue[0];
+            document.getElementById('remaining-count').innerText = sessionQueue.length;
+            
+            // 渲染卡片內容
+            document.getElementById('card-content').innerHTML = `<div class="question-text">${currentCard.q}</div>`;
+            document.getElementById('answer-content').innerText = currentCard.a;
+            document.getElementById('explanation-content').innerHTML = currentCard.exp || "太棒了！";
+
+            // 重置 UI 狀態
+            document.getElementById('answer-section').style.display = 'none';
+            document.getElementById('show-answer-btn-area').style.display = 'flex';
+            document.getElementById('rating-btns-area').style.display = 'none';
+        }
+
+        function showAnswer() {
+            document.getElementById('answer-section').style.display = 'block';
+            document.getElementById('show-answer-btn-area').style.display = 'none';
+            document.getElementById('rating-btns-area').style.display = 'flex';
+            
+            // 自動捲動到底部，確保按鈕可見
+            setTimeout(() => {
+                 document.querySelector('.card').scrollTop = document.querySelector('.card').scrollHeight;
+            }, 100);
+        }
+
+        // 核心演算法 (SM-2 簡化版)
+        // quality: 1 (重來/不會), 3 (還可以), 5 (簡單)
+        function rateCard(quality) {
+            const now = Date.now();
+            const dayMillis = 24 * 60 * 60 * 1000;
+
+            // 在原始資料陣列中找到這張卡片
+            let cardIndex = cards.findIndex(c => c.id === currentCard.id);
+            let card = cards[cardIndex];
+
+            if (quality < 3) {
+                // 答錯了：重置
+                card.reps = 0;
+                card.interval = 1;
+                // 設定為 1 分鐘後重試 (這裡為了 Demo 方便，設為 0，如果隊列還有題就會排在後面)
+                card.nextReview = now + 60000; 
+                
+                // 既然答錯了，這題不移出 sessionQueue，而是移到隊列最後面再做一次
+                sessionQueue.shift(); // 移除開頭
+                sessionQueue.push(currentCard); // 加到最後
+                
+            } else {
+                // 答對了
+                if (card.reps === 0) {
+                    card.interval = 1;
+                } else if (card.reps === 1) {
+                    card.interval = 6;
+                } else {
+                    card.interval = Math.round(card.interval * card.ef);
+                }
+
+                card.reps += 1;
+                // 調整輕鬆度 (EF)
+                // 簡單算法：如果覺得簡單(5)，EF 增加；如果覺得難(3)，EF稍微減少
+                if (quality === 5) card.ef = card.ef + 0.1;
+                if (quality === 3) card.ef = Math.max(1.3, card.ef - 0.15);
+
+                // 設定下次複習時間 (天數 * 毫秒)
+                // 注意：如果是"太簡單"，我們加一點隨機性避免題目堆積
+                card.nextReview = now + (card.interval * dayMillis);
+                
+                // 移出當前學習隊列
+                sessionQueue.shift();
+            }
+
+            saveData(); // 存檔
+            loadNextCard(); // 下一題
+        }
+
+        // --- 5. 頁面切換 ---
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function goHome() {
+            updateHomeStats();
+            showPage('home-page');
+        }
+
+        // 啟動
+        initApp();
+
+    </script>
+</body>
+</html>
