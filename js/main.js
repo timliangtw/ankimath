@@ -1,14 +1,25 @@
-import defaultQuestions from './questions/index.js';
+import loadQuestions from './questions/index.js';
 
 // --- 2. 應用程式狀態 ---
 let cards = [];
 let sessionQueue = []; // 當前學習隊列
 let currentCard = null;
+let defaultQuestions = [];
 
 // --- 3. 核心邏輯 (Local Storage & Anki 簡易演算法) ---
 
 // 初始化
-function initApp() {
+async function initApp() {
+    // 載入題目
+    try {
+        defaultQuestions = await loadQuestions();
+        console.log("Total questions loaded:", defaultQuestions.length);
+    } catch (e) {
+        console.error("Failed to load questions:", e);
+        alert("載入題目失敗，請參閱 Console");
+        return;
+    }
+
     loadData();
     updateHomeStats();
 }
@@ -309,6 +320,7 @@ function previewQuestion(id) {
         }
 
         document.getElementById('preview-q').innerHTML = '';
+        document.getElementById('preview-q').classList.remove('question-text'); // Remove large font for custom components
         try {
             card.render(document.getElementById('preview-q')); // 渲染到題目區
         } catch (e) {
@@ -317,6 +329,7 @@ function previewQuestion(id) {
         document.getElementById('preview-a').style.display = 'none'; // 隱藏答案區
         document.getElementById('preview-exp').style.display = 'none'; // 隱藏解釋區
     } else {
+        document.getElementById('preview-q').classList.add('question-text'); // Add large font for standard text
         document.getElementById('preview-q').innerHTML = card.q;
         document.getElementById('preview-a').style.display = 'block';
         document.getElementById('preview-a-text').innerText = card.a;
