@@ -41,8 +41,16 @@
     <!-- 學習頁面 -->
     <div id="study-page" class="page">
         <div class="container">
-            <div class="stats-bar">
-                剩餘題目: <span id="remaining-count">0</span>
+            <!-- Header Area: Quit Button (Left) + Stats (Right) -->
+            <div
+                style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 10px;">
+                <button onclick="goHome()"
+                    style="background: none; border: none; font-size: 1.1rem; color: #666; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                    <span>🔙</span> 返回
+                </button>
+                <div style="font-size: 1rem; color: #888;">
+                    剩餘題目: <span id="remaining-count">0</span>
+                </div>
             </div>
 
             <!-- 卡片區域 -->
@@ -106,7 +114,8 @@
         <div class="container">
             <h2>題目預覽</h2>
 
-            <div class="card" style="max-height: 60vh;">
+            <!-- Changed: Removed max-height constraint and added overflow handling for safety -->
+            <div class="card" style="max-height: 80vh; overflow-y: auto;">
                 <div id="preview-q" class="question-text"></div>
                 <div id="preview-a" class="answer-area" style="display: block; margin-top: 20px;">
                     <strong>答案：</strong> <span id="preview-a-text"></span>
