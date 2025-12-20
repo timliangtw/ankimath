@@ -20,9 +20,101 @@
 
     <!-- 引入 htm -->
     <script src="https://unpkg.com/htm@3.1.1/dist/htm.umd.js"></script>
+
+    <!-- Import Map for Firebase -->
+    <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js"
+      }
+    }
+    </script>
+    <style>
+        #startup-loading {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.95);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .db-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #eee;
+            color: #666;
+        }
+
+        .db-status.connected {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .db-status.disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .db-status.syncing {
+            background: #e0f2fe;
+            color: #075985;
+        }
+
+        /* Blue for syncing */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+    </style>
 </head>
 
 <body>
+    <!-- Loading Overlay -->
+    <div id="startup-loading">
+        <div class="spinner"></div>
+        <h2 style="margin-top: 20px; color: #555;">正在連線到資料庫...</h2>
+        <p id="loading-msg" style="color: #999; font-size: 0.9rem;">請稍候</p>
+    </div>
+
+    <!-- DB Status -->
+    <div id="db-status-indicator" class="db-status">
+        <div class="status-dot"></div>
+        <span>未連線</span>
+    </div>
 
     <!-- 主選單頁面 -->
     <div id="home-page" class="page active">

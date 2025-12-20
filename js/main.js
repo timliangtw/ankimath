@@ -1,90 +1,198 @@
 import loadQuestions from './questions/index.js';
+import { testConnection } from './firebase-config.js';
+import { getAllProfiles, createProfile, loadUserProfile, saveUserProfile } from './user-manager.js';
 
 // --- 2. 應用程式狀態 ---
 let cards = [];
 let sessionQueue = []; // 當前學習隊列
 let currentCard = null;
 let defaultQuestions = [];
+let currentProfileId = null;
 
-// --- 3. 核心邏輯 (Local Storage & Anki 簡易演算法) ---
+// --- 3. 核心邏輯 (Firestore & Anki 簡易演算法) ---
 
 // 初始化
 async function initApp() {
-    // 載入題目
+    const loadingEl = document.getElementById('startup-loading');
+    const loadingMsg = document.getElementById('loading-msg');
+    const statusEl = document.getElementById('db-status-indicator');
+    const dotEl = statusEl.querySelector('.status-dot');
+    const textEl = statusEl.querySelector('span');
+
     try {
+        // 1. 載入預設題目 (Code)
+        loadingMsg.innerText = "載入題目中...";
         defaultQuestions = await loadQuestions();
         console.log("Total questions loaded:", defaultQuestions.length);
-    } catch (e) {
-        console.error("Failed to load questions:", e);
-        alert("載入題目失敗，請參閱 Console");
-        return;
-    }
 
-    loadData();
+        // 2. 測試資料庫連線
+        loadingMsg.innerText = "連線到雲端資料庫...";
+        const isConnected = await testConnection();
+
+        if (isConnected) {
+            statusEl.classList.add('connected');
+            statusEl.classList.remove('disconnected');
+            textEl.innerText = "已連線";
+            // dotEl color inherited
+        } else {
+            statusEl.classList.add('disconnected');
+            statusEl.classList.remove('connected');
+            textEl.innerText = "連線失敗"; // 仍可試著運作，但無法存檔
+            alert("無法連線到資料庫，請檢查網路。目前將無法儲存進度。");
+        }
+
+        // 3. 處理使用者 Profile
+        // 檢查 LocalStorage 是否有上次登入的 ID
+        const lastProfileId = localStorage.getItem('lastProfileId');
+
+        loadingMsg.innerText = "讀取使用者資料...";
+        const profiles = await getAllProfiles();
+
+        if (profiles.length === 0) {
+            // 沒有任何使用者 -> 創建第一個
+            const name = prompt("歡迎！請輸入你的名字 (例如: 這裡輸入小孩名字):", "小明");
+            if (name) {
+                const newInfo = await createProfile(name);
+                await loginProfile(newInfo.id);
+            } else {
+                alert("必須輸入名字才能開始！");
+                location.reload();
+                return;
+            }
+        } else {
+            // 有使用者
+            if (lastProfileId && profiles.find(p => p.id === lastProfileId)) {
+                // 自動登入上次的使用者
+                await loginProfile(lastProfileId);
+            } else {
+                // 顯示選擇與建立介面 (簡單用 prompt/confirm 或是自製 UI)
+                // 這裡為了簡化，如果找不到上次的，就列出名字讓使用者輸入，或是輸入新名字
+                const names = profiles.map(p => p.name).join(', ');
+                const inputName = prompt(`請輸入你的名字以登入:\n(已知使用者: ${names})\n\n或輸入新名字建立新帳號:`);
+
+                if (!inputName) {
+                    alert("請重新整理並輸入名字");
+                    return;
+                }
+
+                const existing = profiles.find(p => p.name === inputName);
+                if (existing) {
+                    await loginProfile(existing.id);
+                } else {
+                    const newInfo = await createProfile(inputName);
+                    await loginProfile(newInfo.id);
+                }
+            }
+        }
+
+        // 移除 Loading
+        loadingEl.style.display = 'none';
+
+    } catch (e) {
+        console.error("Init failed:", e);
+        loadingMsg.innerText = "發生錯誤: " + e.message;
+        loadingMsg.style.color = "red";
+    }
+}
+
+// 登入特定 Profile 並載入資料
+async function loginProfile(profileId) {
+    currentProfileId = profileId;
+    localStorage.setItem('lastProfileId', profileId); // 記住登入狀態
+
+    // 載入該使用者的進度資料
+    const userData = await loadUserProfile(profileId);
+
+    // 合併邏輯 (Merge Content + Progress)
+    const savedCards = userData && userData.cards ? userData.cards : [];
+
+    cards = defaultQuestions.map(defaultQ => {
+        const savedCard = savedCards.find(c => c.id === defaultQ.id);
+        if (savedCard) {
+            return {
+                ...defaultQ, // 使用最新的 Code (q, a, render...)
+                // 覆蓋進度
+                reps: savedCard.reps,
+                interval: savedCard.interval,
+                ef: savedCard.ef,
+                nextReview: savedCard.nextReview
+            };
+        } else {
+            return {
+                ...defaultQ,
+                interval: 0,
+                reps: 0,
+                ef: 2.5,
+                nextReview: 0
+            };
+        }
+    });
+
+    console.log(`User ${profileId} loaded with ${cards.length} cards.`);
     updateHomeStats();
 }
 
-// 讀取資料
-// 讀取資料
-function loadData() {
-    const storedData = localStorage.getItem('ankiMathKids_v1');
-    if (storedData) {
-        const loadedCards = JSON.parse(storedData);
+// 存檔 (同步到 Firestore)
+async function saveData() {
+    if (!currentProfileId) return;
 
-        // 合併邏輯：保留儲存的學習進度 (State)，但使用最新的題目內容 (Content/Code)
-        // 這樣可以確保：
-        // 1. 即使題目文字更新，使用者也不會看到舊的。
-        // 2. 函數 (如 render) 無法被 JSON 儲存，必須從 defaultQuestions 重新掛載。
-        cards = defaultQuestions.map(defaultQ => {
-            const savedCard = loadedCards.find(c => c.id === defaultQ.id);
-            if (savedCard) {
-                return {
-                    ...defaultQ, // 先載入最新的程式碼與內容 (含 render)
-                    // 覆蓋學習狀態
-                    reps: savedCard.reps,
-                    interval: savedCard.interval,
-                    ef: savedCard.ef,
-                    nextReview: savedCard.nextReview
-                };
-            } else {
-                // 這是新題目 (儲存檔裡沒有)
-                return {
-                    ...defaultQ,
-                    interval: 0,
-                    reps: 0,
-                    ef: 2.5,
-                    nextReview: 0
-                };
+    const statusEl = document.getElementById('db-status-indicator');
+    const textEl = statusEl.querySelector('span');
+
+    // 更新狀態為同步中
+    statusEl.className = 'db-status syncing';
+    textEl.innerText = "同步中...";
+
+    // 我們只存需要的欄位，不存題目內容 (節省流量與空間)
+    const progressData = cards.map(c => ({
+        id: c.id,
+        reps: c.reps,
+        interval: c.interval,
+        ef: c.ef,
+        nextReview: c.nextReview
+    }));
+
+    try {
+        await saveUserProfile(currentProfileId, progressData);
+        // 同步完成
+        statusEl.className = 'db-status connected';
+        textEl.innerText = "已同步";
+
+        // 2秒後變回單純的 "已連線" 或是保留 "已同步" 也可以
+        // 這裡我們讓它顯示一下 "已同步" 然後變回 "已連線" 代表待機
+        setTimeout(() => {
+            if (statusEl.classList.contains('connected')) {
+                textEl.innerText = "已連線";
             }
-        });
+        }, 2000);
 
-        // 如果 loadedCards 有舊題目是 defaultQuestions 已經刪除的，這裡會自動過濾掉 (因為我們是 map defaultQuestions)
-        // 這通常是預期的行為 (移除舊題)。
+    } catch (e) {
+        console.error("Sync failed:", e);
+        statusEl.className = 'db-status disconnected';
+        textEl.innerText = "同步失敗";
+    }
+}
 
-    } else {
-        // 第一次使用
-        cards = defaultQuestions.map(q => ({
-            ...q,
-            interval: 0,
+// 清除資料 (Reset)
+async function clearDataConfirm() {
+    if (confirm("確定要清除所有學習進度嗎？這個動作會清空雲端上的紀錄喔！")) {
+        // 重置 local state
+        cards = cards.map(c => ({
+            ...c,
             reps: 0,
+            interval: 0,
             ef: 2.5,
             nextReview: 0
         }));
-    }
-    saveData();
-}
-
-// 存檔
-function saveData() {
-    localStorage.setItem('ankiMathKids_v1', JSON.stringify(cards));
-}
-
-// 清除資料
-function clearDataConfirm() {
-    if (confirm("確定要清除所有學習進度嗎？小孩的複習紀錄會歸零喔！")) {
-        localStorage.removeItem('ankiMathKids_v1');
+        await saveData();
         location.reload();
     }
+}
+
+// 切換使用者 (登出)
+function logout() {
+    localStorage.removeItem('lastProfileId');
+    location.reload();
 }
 
 // 更新首頁數字
@@ -102,10 +210,9 @@ function startSession() {
     sessionQueue = cards.filter(c => c.nextReview <= now);
 
     if (sessionQueue.length === 0) {
-        // 如果沒有到期的，可以練習一些未來的，或是隨機選幾題複習 (這裡我們先簡單處理：直接顯示完成)
-        // 為了讓展示有趣，如果全部做完了，就抓最早複習的那幾題進來
-        alert("目前沒有到期的題目，但我們還是來練習一下吧！");
-        sessionQueue = [...cards].sort((a, b) => a.nextReview - b.nextReview).slice(0, 5);
+        // 如果沒有到期的，可以練習一些未來的，或是隨機選幾題複習
+        alert("目前沒有到期的題目，但我們還是來練習一下吧！(隨機挑選 5 題)");
+        sessionQueue = [...cards].sort(() => Math.random() - 0.5).slice(0, 5);
     }
 
     if (sessionQueue.length > 0) {
@@ -131,7 +238,7 @@ function loadNextCard() {
     // 清空並重置容器
     cardContent.innerHTML = '';
     document.getElementById('answer-section').style.display = 'none';
-    document.getElementById('show-answer-btn-area').style.display = 'none'; // 預設隱藏，標準題目會打開
+    document.getElementById('show-answer-btn-area').style.display = 'none';
     document.getElementById('rating-btns-area').style.display = 'none';
 
     // --- 檢查是否為自訂渲染 (Custom Render) ---
@@ -142,28 +249,21 @@ function loadNextCard() {
         }
 
         try {
-            // 自訂渲染模式：交給卡片自己處理 UI
-            // 為了避免 React Root 重複建立在同一個 div 上導致錯誤 (React 18 warning/error)
-            // 我們每次都建立一個新的掛載點
             const mountPoint = document.createElement('div');
             mountPoint.style.width = '100%';
             cardContent.appendChild(mountPoint);
-
             currentCard.render(mountPoint);
         } catch (error) {
             console.error("Render Error:", error);
             cardContent.innerHTML = `<div style="color:red; padding:20px;">渲染錯誤：${error.message}</div>`;
         }
 
-
-        // 注意：自訂卡片因為本身就會顯示答案，所以不需要 "看答案" 按鈕
-        // 直接顯示評分按鈕
+        // 自訂卡片不需要看答案按鈕
         document.getElementById('show-answer-btn-area').style.display = 'none';
         document.getElementById('rating-btns-area').style.display = 'flex';
 
     } else {
         // --- 標準模式 ---
-        // 渲染卡片內容
         cardContent.innerHTML = `<div class="question-text">${currentCard.q}</div>`;
         document.getElementById('answer-content').innerText = currentCard.a;
         document.getElementById('explanation-content').innerHTML = currentCard.exp || "太棒了！";
@@ -178,35 +278,30 @@ function showAnswer() {
     document.getElementById('show-answer-btn-area').style.display = 'none';
     document.getElementById('rating-btns-area').style.display = 'flex';
 
-    // 自動捲動到底部，確保按鈕可見
     setTimeout(() => {
         document.querySelector('.card').scrollTop = document.querySelector('.card').scrollHeight;
     }, 100);
 }
 
 // 核心演算法 (SM-2 簡化版)
-// quality: 1 (重來/不會), 3 (還可以), 5 (簡單)
-function rateCard(quality) {
+async function rateCard(quality) {
     const now = Date.now();
     const dayMillis = 24 * 60 * 60 * 1000;
 
-    // 在原始資料陣列中找到這張卡片
     let cardIndex = cards.findIndex(c => c.id === currentCard.id);
     let card = cards[cardIndex];
 
     if (quality < 3) {
-        // 答錯了：重置
+        // 答錯
         card.reps = 0;
         card.interval = 1;
-        // 設定為 1 分鐘後重試 (這裡為了 Demo 方便，設為 0，如果隊列還有題就會排在後面)
-        card.nextReview = now + 60000;
+        card.nextReview = now + 60000; // 1 min later
 
-        // 既然答錯了，這題不移出 sessionQueue，而是移到隊列最後面再做一次
-        sessionQueue.shift(); // 移除開頭
-        sessionQueue.push(currentCard); // 加到最後
+        sessionQueue.shift();
+        sessionQueue.push(currentCard); // Put back to end
 
     } else {
-        // 答對了
+        // 答對
         if (card.reps === 0) {
             card.interval = 1;
         } else if (card.reps === 1) {
@@ -216,21 +311,17 @@ function rateCard(quality) {
         }
 
         card.reps += 1;
-        // 調整輕鬆度 (EF)
-        // 簡單算法：如果覺得簡單(5)，EF 增加；如果覺得難(3)，EF稍微減少
         if (quality === 5) card.ef = card.ef + 0.1;
         if (quality === 3) card.ef = Math.max(1.3, card.ef - 0.15);
 
-        // 設定下次複習時間 (天數 * 毫秒)
-        // 注意：如果是"太簡單"，我們加一點隨機性避免題目堆積
         card.nextReview = now + (card.interval * dayMillis);
 
-        // 移出當前學習隊列
         sessionQueue.shift();
     }
 
-    saveData(); // 存檔
-    loadNextCard(); // 下一題
+    // 每次評分都同步存檔
+    await saveData();
+    loadNextCard();
 }
 
 // --- 5. 頁面切換 ---
@@ -252,22 +343,31 @@ function openSettings() {
 
 function renderQuestionList() {
     const listContainer = document.getElementById('question-list');
-    listContainer.innerHTML = ''; // 清空
+    listContainer.innerHTML = '';
 
-    // 顯示所有 "已導入" 的題目。
-    cards.sort((a, b) => a.id - b.id).forEach(card => {
+    // 插入切換使用者按鈕
+    const userControlDiv = document.createElement('div');
+    userControlDiv.style.padding = '10px';
+    userControlDiv.style.marginBottom = '20px';
+    userControlDiv.style.background = '#f0f9ff';
+    userControlDiv.style.borderRadius = '10px';
+    userControlDiv.innerHTML = `
+        <p style="margin:0 0 10px 0; color:#444;">目前使用者: <b>${currentProfileId || '未知'}</b></p>
+        <button class="btn btn-neutral" style="font-size:0.9rem; padding: 5px 15px;">登出 / 切換使用者</button>
+    `;
+    userControlDiv.querySelector('button').onclick = logout;
+    listContainer.appendChild(userControlDiv);
+
+    cards.sort((a, b) => (typeof a.id === 'string' ? a.id.localeCompare(b.id) : a.id - b.id)).forEach(card => {
         const item = document.createElement('div');
         item.className = 'q-item';
 
-        // 優先顯示 title，如果沒有則移除 HTML 標籤顯示內容
         let displayText = card.title || card.q.replace(/<[^>]*>?/gm, '');
 
-        // 格式化時間
         let nextReviewText = "尚未開始";
         const now = Date.now();
         if (card.nextReview > 0) {
             const date = new Date(card.nextReview);
-            // 簡單格式：MM/DD HH:mm
             const month = (date.getMonth() + 1).toString().padStart(2, '0');
             const day = date.getDate().toString().padStart(2, '0');
             const hour = date.getHours().toString().padStart(2, '0');
@@ -301,18 +401,6 @@ function previewQuestion(id) {
     const card = cards.find(c => c.id === id);
     if (!card) return;
 
-    // 清空舊內容
-    // 注意：如果是 React 元件，我們需要 unmount 嗎？在這個簡單版我們直接清innerHTML
-    // 但如果有 render 方法，我們優先使用 render 到預覽區
-
-    // 不過 preview-page 的 DOM 結構是寫死的 (preview-q, preview-a, preview-exp)
-    // 為了適應 custom render，我們可能需要改造 preview-page 的結構
-    // 簡單做法：如果 custom render，隱藏標準欄位，只顯示 render 容器
-
-    // 但原結構：
-    // <div id="preview-q" ...></div>
-    // <div id="preview-a" ...></div>
-
     if (card.render) {
         if (!window.React || !window.ReactDOM || !window.htm) {
             document.getElementById('preview-q').innerHTML = '<div style="color:red;">錯誤：缺少必要函式庫 (React/htm)。</div>';
@@ -320,16 +408,16 @@ function previewQuestion(id) {
         }
 
         document.getElementById('preview-q').innerHTML = '';
-        document.getElementById('preview-q').classList.remove('question-text'); // Remove large font for custom components
+        document.getElementById('preview-q').classList.remove('question-text');
         try {
-            card.render(document.getElementById('preview-q')); // 渲染到題目區
+            card.render(document.getElementById('preview-q'));
         } catch (e) {
             document.getElementById('preview-q').innerHTML = `<div style="color:red;">預覽錯誤：${e.message}</div>`;
         }
-        document.getElementById('preview-a').style.display = 'none'; // 隱藏答案區
-        document.getElementById('preview-exp').style.display = 'none'; // 隱藏解釋區
+        document.getElementById('preview-a').style.display = 'none';
+        document.getElementById('preview-exp').style.display = 'none';
     } else {
-        document.getElementById('preview-q').classList.add('question-text'); // Add large font for standard text
+        document.getElementById('preview-q').classList.add('question-text');
         document.getElementById('preview-q').innerHTML = card.q;
         document.getElementById('preview-a').style.display = 'block';
         document.getElementById('preview-a-text').innerText = card.a;
@@ -344,7 +432,7 @@ function backToSettings() {
     showPage('settings-page');
 }
 
-// Expose functions to window for HTML onclick events
+// Expose functions
 window.startSession = startSession;
 window.clearDataConfirm = clearDataConfirm;
 window.showAnswer = showAnswer;
@@ -353,6 +441,7 @@ window.goHome = goHome;
 window.openSettings = openSettings;
 window.previewQuestion = previewQuestion;
 window.backToSettings = backToSettings;
+window.logout = logout;
 
 // 啟動
 initApp();
