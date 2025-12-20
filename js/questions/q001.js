@@ -286,7 +286,7 @@ const LogicGame = () => {
 };
 
 export default {
-    id: 1,
+    id: 'q001',
     type: 'custom',
     title: '邏輯推理：誰排在哪裡？',
     q: '位置邏輯推理 (點擊開啟互動介面)',

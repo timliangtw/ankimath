@@ -303,7 +303,7 @@ const BlockCountingGame = () => {
 };
 
 export default {
-    id: 'block_counting',
+    id: 'q010',
     type: 'custom',
     title: '積木透視眼：共有幾個？',
     q: '空間概念與分層計數 (點擊開啟互動介面)',

@@ -223,7 +223,7 @@ const QueuePractice = () => {
 
 
 export default {
-    id: 6,
+    id: 'q006',
     type: 'custom',
     title: '排隊邏輯小學堂 (互動)',
     q: '排隊邏輯題目 (點擊開啟互動介面)',

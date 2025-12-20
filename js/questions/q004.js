@@ -273,7 +273,7 @@ const SequenceCheckerGame = () => {
 };
 
 export default {
-    id: 'sequence_checker',
+    id: 'q004',
     type: 'custom',
     title: '數列規則檢查器',
     q: '數列邏輯測驗 (點擊開啟互動介面)',

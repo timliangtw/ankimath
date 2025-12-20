@@ -230,7 +230,7 @@ const ShoppingProblem = () => {
 };
 
 export default {
-    id: 'shopping_payment',
+    id: 'q005',
     type: 'custom',
     title: '購物付款：要付幾個10元？',
     q: '生活應用與估算 (點擊開啟互動介面)',

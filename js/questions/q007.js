@@ -282,7 +282,7 @@ const RibbonProblem = () => {
 };
 
 export default {
-    id: 7,
+    id: 'q007',
     type: 'custom',
     title: '重疊問題小學堂 (互動)',
     q: '彩帶重疊邏輯 (點擊開啟互動介面)',

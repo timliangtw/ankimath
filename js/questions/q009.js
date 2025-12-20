@@ -393,7 +393,7 @@ const GeometryLogicGame = () => {
 };
 
 export default {
-    id: 'geometry_logic',
+    id: 'q009',
     type: 'custom',
     title: '圖形偵探：哪一句話說錯了？',
     q: '邏輯與計數 (點擊開啟互動介面)',

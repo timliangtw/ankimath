@@ -236,7 +236,7 @@ const PocketMoney = () => {
 };
 
 export default {
-    id: 'pocket_money',
+    id: 'q008',
     type: 'custom',
     title: '零用錢計算機：爸爸給了多少？',
     q: '應用題：錢變多了 (點擊開啟互動介面)',

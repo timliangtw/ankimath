@@ -253,7 +253,7 @@ const NumberDetective = () => {
 };
 
 export default {
-    id: 'number_detective',
+    id: 'q003',
     type: 'custom',
     title: '數字偵探：神秘的二位數',
     q: '邏輯推理與倍數判斷 (點擊開啟互動介面)',

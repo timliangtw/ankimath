@@ -245,7 +245,7 @@ const MealCountingQuestion = () => {
 
 // --- 設定檔 (Metadata) ---
 export default {
-    id: 'counting_meal', // 唯一 ID
+    id: 'q002', // 唯一 ID
     type: 'custom',
     title: '統計圖表：朋友有幾個？',
     q: '統計與加減應用 (點擊開啟互動介面)',
