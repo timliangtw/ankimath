@@ -149,7 +149,8 @@ async function saveData() {
         reps: c.reps,
         interval: c.interval,
         ef: c.ef,
-        nextReview: c.nextReview
+        nextReview: c.nextReview,
+        lastUpdated: c.lastUpdated // 重要：同步時間戳記
     }));
 
     try {
@@ -290,6 +291,9 @@ async function rateCard(quality) {
 
     let cardIndex = cards.findIndex(c => c.id === currentCard.id);
     let card = cards[cardIndex];
+
+    // 更新時間戳記 (為了 Smart Merge)
+    card.lastUpdated = now;
 
     if (quality < 3) {
         // 答錯

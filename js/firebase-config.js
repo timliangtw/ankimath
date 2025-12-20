@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs, limit } from "firebase/firestore";
+import { getFirestore, collection, getDocs, limit, enableIndexedDbPersistence } from "firebase/firestore";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAgp7O2jnHZ6rRZOVewQviAaOmj_OBpFA8",
@@ -16,7 +16,17 @@ let db;
 try {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
-    console.log("Firebase initialized");
+
+    // 啟用離線 persistence
+    enableIndexedDbPersistence(db).catch((err) => {
+        if (err.code == 'failed-precondition') {
+            console.warn("Persistence failed: Multiple tabs open.");
+        } else if (err.code == 'unimplemented') {
+            console.warn("Persistence not supported by browser.");
+        }
+    });
+
+    console.log("Firebase initialized with persistence check");
 } catch (e) {
     console.error("Firebase init error:", e);
 }
