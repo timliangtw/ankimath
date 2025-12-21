@@ -8,6 +8,7 @@ const html = htm.bind(React.createElement);
  */
 
 // --- 輔助元件：單顆積木 (SVG Isometric Cube) ---
+// --- 輔助元件：單顆積木 (SVG Isometric Cube) ---
 const IsoCube = ({ x, y, z, color = "#fbbf24", opacity = 1 }) => {
     const tileW = 24;
     const tileH = 14;
@@ -16,17 +17,36 @@ const IsoCube = ({ x, y, z, color = "#fbbf24", opacity = 1 }) => {
     const screenX = (x - y) * tileW + 150;
     const screenY = (x + y) * tileH - (z * blockH) + 150;
 
+    // 顏色計算 (固定光影以確保層次感)
+    // 我們不依賴傳入的 color 做複雜運算，直接使用 HSL 或固定的色階，這裡為了保持原本色系做微調
+    // Top: 最亮
+    // Right: 中間 (-20%)
+    // Left: 最暗 (-40%)
+
+    // 簡單的 HEX 調暗 function
     const adjustColor = (c, amt) => '#' + c.replace(/^#/, '').replace(/../g, color => ('0' + Math.min(255, Math.max(0, parseInt(color, 16) + amt)).toString(16)).substr(-2));
 
     const topColor = color;
-    const rightColor = adjustColor(color, -20);
-    const leftColor = adjustColor(color, -40);
+    const rightColor = adjustColor(color, -30); // 讓右側面更暗一點
+    const leftColor = adjustColor(color, -60);  // 左側面最暗
+
+    // 統一的邊框顏色，讓積木邊界分明
+    const strokeColor = "rgba(0,0,0,0.3)";
+    const strokeWidth = "1.5";
 
     return html`
         <g className="cube-transition" style=${{ opacity: opacity, transform: `translate(${screenX}px, ${screenY}px)` }}>
-            <path d="M0 ${tileH} L0 ${tileH + blockH} L-${tileW} ${blockH} L-${tileW} 0 Z" fill=${leftColor} stroke="${leftColor}" strokeWidth="1"/>
-            <path d="M0 ${tileH} L${tileW} 0 L${tileW} ${blockH} L0 ${tileH + blockH} Z" fill=${rightColor} stroke="${rightColor}" strokeWidth="1"/>
-            <path d="M0 ${tileH} L-${tileW} 0 L0 -${tileH} L${tileW} 0 Z" fill=${topColor} stroke="#ffffff" strokeWidth="1" strokeOpacity="0.5"/>
+            <!-- 左側面 -->
+            <path d="M0 ${tileH} L0 ${tileH + blockH} L-${tileW} ${blockH} L-${tileW} 0 Z" 
+                  fill=${leftColor} stroke=${strokeColor} strokeWidth=${strokeWidth} strokeLinejoin="round" />
+            
+            <!-- 右側面 -->
+            <path d="M0 ${tileH} L${tileW} 0 L${tileW} ${blockH} L0 ${tileH + blockH} Z" 
+                  fill=${rightColor} stroke=${strokeColor} strokeWidth=${strokeWidth} strokeLinejoin="round" />
+            
+            <!-- 上頂面 -->
+            <path d="M0 ${tileH} L-${tileW} 0 L0 -${tileH} L${tileW} 0 Z" 
+                  fill=${topColor} stroke=${strokeColor} strokeWidth=${strokeWidth} strokeLinejoin="round" />
         </g>
     `;
 };
