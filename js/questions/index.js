@@ -7,6 +7,9 @@ async function loadQuestions() {
     let index = 1;
     const maxLimit = 999; // 避免無窮迴圈的保險機制
 
+    let consecutiveFailures = 0;
+    const maxConsecutiveFailures = 3; // 允許連續找不到 3 個檔案才停止
+
     while (index <= maxLimit) {
         // 格式化編號：將 1 轉成 "001"
         const idStr = index.toString().padStart(3, '0');
@@ -22,13 +25,20 @@ async function loadQuestions() {
             questions.push(module.default);
             console.log(`Loaded: ${filename}`);
 
-            index++;
+            // 成功載入，重置連續失敗計數
+            consecutiveFailures = 0;
+
         } catch (error) {
-            // 載入失敗，通常代表檔案不存在，停止載入
-            // console.warn(`End of question list or error loading q${idStr}.js:`, error);
-            // 這裡我們不 throw，而是當作載入結束
-            break;
+            // 載入失敗，我們不馬上 break，而是增加失敗計數
+            // console.warn(`Failed to load q${idStr}.js (might be missing)`);
+            consecutiveFailures++;
+
+            if (consecutiveFailures >= maxConsecutiveFailures) {
+                console.log(`Stopped loading after ${maxConsecutiveFailures} consecutive missing files.`);
+                break;
+            }
         }
+        index++;
     }
 
     return questions;

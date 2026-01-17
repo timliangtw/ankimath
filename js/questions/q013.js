@@ -111,7 +111,7 @@ const FruitWeightGame = ({ onCorrect }) => {
             setFeedback('correct');
             setGameState('won');
             setIsExplaining(true);
-            if (onCorrect) onCorrect(); // 通知外部答對了 (Anki 演算法)
+            // Removed auto-advance: if (onCorrect) onCorrect();
         } else {
             setFeedback('wrong');
             setGameState('playing');
@@ -238,10 +238,6 @@ const FruitWeightGame = ({ onCorrect }) => {
             }
                             </div>
                         </div>
-
-                        <button onClick=${generateLevel} className="mt-6 w-full py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-colors shadow-sm">
-                            再玩一題
-                        </button>
                     </div>
                 `}
             </div>
@@ -257,7 +253,6 @@ export default {
     q: '觀察天平的關係，推算出一個大物品等於幾個小物品',
     render: (container) => {
         const root = createRoot(container);
-        // 傳入 onCorrect 讓 component 可以呼叫
-        root.render(html`<${FruitWeightGame} onCorrect=${() => window.rateCard && window.rateCard(5)} />`);
+        root.render(html`<${FruitWeightGame} />`);
     }
 };
