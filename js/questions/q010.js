@@ -155,7 +155,7 @@ const BlockCountingGame = () => {
             setViewMode('layers'); // 答對自動切換
         } else {
             setFeedback('wrong');
-            setGameState('playing');
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();setGameState('playing');
         }
     };
 

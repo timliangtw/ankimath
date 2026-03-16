@@ -131,7 +131,7 @@ const NumberDetective = () => {
             setShowExplanation(true);
         } else {
             setFeedback('wrong');
-            setShowExplanation(false);
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();setShowExplanation(false);
         }
     };
 

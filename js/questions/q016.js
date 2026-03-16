@@ -104,7 +104,7 @@ const MyQuestionComponent = () => {
             setFeedback('correct');
         } else {
             setFeedback('wrong');
-        }
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();}
     };
 
     const allMysteryCells = problem.layout.flatMap(p => p.cells);

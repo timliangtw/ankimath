@@ -114,7 +114,7 @@ const FruitWeightGame = ({ onCorrect }) => {
             // Removed auto-advance: if (onCorrect) onCorrect();
         } else {
             setFeedback('wrong');
-            setGameState('playing');
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();setGameState('playing');
         }
     };
 

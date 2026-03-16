@@ -84,7 +84,7 @@ const QueuePractice = () => {
             setShowExplanation(true);
         } else {
             setFeedback('wrong');
-            setShowExplanation(true);
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();setShowExplanation(true);
         }
     };
 

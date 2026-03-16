@@ -104,7 +104,7 @@ const MyQuestionComponent = () => {
             setScore(score + 1);
         } else {
             setFeedback('wrong');
-        }
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();}
     };
 
     const nextQuestion = () => {

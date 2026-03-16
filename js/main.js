@@ -25,6 +25,24 @@ async function initApp() {
         defaultQuestions = await loadQuestions();
         console.log("Total questions loaded:", defaultQuestions.length);
 
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('debug')) {
+            console.log("進入除錯模式 (Debug Mode)，跳過資料庫與登入");
+            statusEl.className = 'db-status disconnected';
+            textEl.innerText = "Debug (未連線)";
+            currentProfileId = "debug_user";
+            cards = defaultQuestions.map(defaultQ => ({
+                ...defaultQ,
+                interval: 0,
+                reps: 0,
+                ef: 2.5,
+                nextReview: 0
+            }));
+            updateHomeStats();
+            loadingEl.style.display = 'none';
+            return;
+        }
+
         // 2. 測試資料庫連線
         loadingMsg.innerText = "連線到雲端資料庫...";
         const isConnected = await testConnection();
@@ -135,6 +153,7 @@ async function loginProfile(profileId) {
 // 存檔 (同步到 Firestore)
 async function saveData() {
     if (!currentProfileId) return;
+    if (currentProfileId === 'debug_user') return; // 除錯模式不存檔
 
     const statusEl = document.getElementById('db-status-indicator');
     const textEl = statusEl.querySelector('span');
@@ -235,6 +254,14 @@ function loadNextCard() {
     document.getElementById('remaining-count').innerText = sessionQueue.length;
 
     const cardContent = document.getElementById('card-content');
+
+    // 重設「太簡單了」按鈕狀態
+    const btnEasy = document.getElementById('btn-easy');
+    if (btnEasy) {
+        btnEasy.disabled = false;
+        btnEasy.style.opacity = '1';
+        btnEasy.style.cursor = 'pointer';
+    }
 
     // 清空並重置容器
     cardContent.innerHTML = '';
@@ -435,6 +462,16 @@ function previewQuestion(id) {
 function backToSettings() {
     showPage('settings-page');
 }
+
+// 當答錯時被呼叫，用來禁用「太簡單了」選項
+window.onIncorrectAnswer = function () {
+    const btnEasy = document.getElementById('btn-easy');
+    if (btnEasy) {
+        btnEasy.disabled = true;
+        btnEasy.style.opacity = '0.5';
+        btnEasy.style.cursor = 'not-allowed';
+    }
+};
 
 // Expose functions
 window.startSession = startSession;

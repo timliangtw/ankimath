@@ -93,11 +93,12 @@ const MealCountingQuestion = () => {
             setFeedback('correct');
             setShowExplanation(true);
         } else if (selectedAns === totalOrders) {
-            setFeedback('trap'); // 中了陷阱
+            setFeedback('trap');
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();// 中了陷阱
             setShowExplanation(true);
         } else {
             setFeedback('wrong');
-            setShowExplanation(false);
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();setShowExplanation(false);
         }
     };
 

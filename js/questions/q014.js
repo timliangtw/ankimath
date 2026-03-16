@@ -35,7 +35,7 @@ const MyQuestionComponent = () => {
             setFeedback('correct');
         } else {
             setFeedback('wrong');
-        }
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();}
     };
 
     if (!problem) return html`<div>載入中...</div>`;

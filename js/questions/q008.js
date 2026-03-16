@@ -76,10 +76,11 @@ const PocketMoney = () => {
         if (ans === dadGiven) {
             setFeedback('correct');
         } else if (ans === startMoney + totalMoney) {
-            setFeedback('trap_add'); // 孩子把兩個數字加起來了
+            setFeedback('trap_add');
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();// 孩子把兩個數字加起來了
         } else {
             setFeedback('wrong');
-        }
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();}
     };
 
     // 3. 畫面渲染

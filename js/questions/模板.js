@@ -35,7 +35,7 @@ const MyQuestionComponent = () => {
             setFeedback('correct');
         } else {
             setFeedback('wrong');
-        }
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();}
     };
 
     // --- 3. 畫面渲染 (Render) ---
