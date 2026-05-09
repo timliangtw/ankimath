@@ -41,7 +41,7 @@ const IslandTripProblem = () => {
     }, []);
 
     const handleSelect = (value) => {
-        if (gameState !== 'playing') return;
+        if (gameState === 'correct') return;
         setSelected(value);
         if (value === CORRECT) {
             setGameState('correct');
@@ -123,7 +123,7 @@ const IslandTripProblem = () => {
                     const isSelected = selected === opt.value;
                     const isCorrect  = gameState === 'correct' && isSelected;
                     const isWrong    = gameState === 'wrong'   && isSelected;
-                    const isDisabled = gameState !== 'playing' && !isSelected;
+                    const isDisabled = gameState === 'correct' && !isSelected;
                     return html`
                         <button
                             key=${idx}

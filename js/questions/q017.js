@@ -64,7 +64,7 @@ const EggTartProblem = () => {
     useEffect(() => { newProblem(); }, []);
 
     const handleSelect = (opt) => {
-        if (gameState !== 'playing') return;
+        if (gameState === 'correct') return;
         setSelected(opt);
         if (opt === problem.D) {
             setGameState('correct');
@@ -128,7 +128,7 @@ const EggTartProblem = () => {
                     const isSelected = selected === opt;
                     const isCorrect = gameState === 'correct' && isSelected;
                     const isWrong = gameState === 'wrong' && isSelected;
-                    const isDisabled = gameState !== 'playing' && !isSelected;
+                    const isDisabled = gameState === 'correct' && !isSelected;
 
                     return html`
                         <button
