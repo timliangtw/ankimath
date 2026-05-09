@@ -53,6 +53,37 @@
 6. `export default` 包含 `id`、`type: 'custom'`、`title`、`q`、`render`
 7. Tailwind CSS 配色風格與現有題目一致（amber/green/red/blue）
 
+**⚠️ 常見錯誤（一定要避免）：**
+
+**錯誤 A：inline style 用字串**
+```javascript
+// ❌ 錯誤：React dev 版會直接拋錯，造成題目空白
+<table style="max-width:320px; margin:0 auto;">
+
+// ✅ 正確：style 必須是物件
+<table style=${{maxWidth: '320px', margin: '0 auto'}}>
+```
+
+**錯誤 B：答錯後鎖住所有選項**
+```javascript
+// ❌ 錯誤：答錯後 gameState='wrong'，選項全部 disabled，學生無法重試
+if (gameState !== 'playing') return;
+const isDisabled = gameState !== 'playing' && !isSelected;
+
+// ✅ 正確：只有答對後才鎖，答錯可以繼續選
+if (gameState === 'correct') return;
+const isDisabled = gameState === 'correct' && !isSelected;
+```
+
+**錯誤 C：答錯後送出按鈕消失（填空題型）**
+```javascript
+// ❌ 錯誤：!feedback 讓送出按鈕在答錯後消失，學生卡住
+${!feedback && html`<button onClick=${checkAnswer}>送出答案</button>`}
+
+// ✅ 正確：只有答對後才隱藏送出按鈕
+${feedback !== 'correct' && html`<button onClick=${checkAnswer}>送出答案</button>`}
+```
+
 **答對回饋區必須包含：**
 - 題目關鍵計算步驟（逐行列出）
 - 最終答案高亮顯示
