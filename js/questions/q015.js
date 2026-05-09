@@ -128,7 +128,7 @@ const MyQuestionComponent = () => {
                     <span className="text-2xl font-bold text-slate-400">${problem.unit}</span>
                 </div>
 
-                ${!feedback && html`
+                ${feedback !== 'correct' && html`
                     <button
                         onClick=${checkAnswer}
                         className="w-full md:w-auto px-12 py-4 bg-sky-500 hover:bg-sky-600 text-white text-xl font-bold rounded-2xl shadow-lg transition-all"

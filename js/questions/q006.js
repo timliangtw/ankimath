@@ -184,7 +184,7 @@ const QueuePractice = () => {
                 </div>
 
                 <!-- 確認按鈕 -->
-                ${!feedback && html`
+                ${feedback !== 'correct' && html`
                     <button
                         onClick=${checkAnswer}
                         className="w-full md:w-auto px-12 py-4 bg-sky-500 hover:bg-sky-600 active:scale-95 text-white text-xl font-bold rounded-2xl shadow-lg shadow-sky-200 transition-all flex items-center justify-center gap-2"

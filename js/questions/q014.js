@@ -78,7 +78,7 @@ const MyQuestionComponent = () => {
                     <span className="text-2xl font-bold text-slate-400">元</span>
                 </div>
 
-                ${!feedback && html`
+                ${feedback !== 'correct' && html`
                     <button
                         onClick=${checkAnswer}
                         className="w-full md:w-auto px-12 py-4 bg-orange-500 hover:bg-orange-600 text-white text-xl font-bold rounded-2xl shadow-lg transition-all"
