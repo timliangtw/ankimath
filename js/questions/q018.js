@@ -69,7 +69,7 @@ const JapanTripProblem = () => {
             <!-- 月曆 -->
             <div className="bg-white border border-slate-200 rounded-2xl p-3 mb-5">
                 <div className="text-center font-bold text-slate-700 mb-2 text-sm">2 月</div>
-                <table className="w-full text-center" style="max-width:320px; margin:0 auto;">
+                <table className="w-full text-center" style=${{maxWidth: '320px', margin: '0 auto'}}>
                     <thead>
                         <tr>
                             ${DOW_LABELS.map((d, i) => html`
