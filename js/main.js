@@ -456,12 +456,16 @@ function previewQuestion(id) {
             return;
         }
 
-        document.getElementById('preview-q').innerHTML = '';
-        document.getElementById('preview-q').classList.remove('question-text');
+        const previewQ = document.getElementById('preview-q');
+        previewQ.innerHTML = '';
+        previewQ.classList.remove('question-text');
         try {
-            card.render(document.getElementById('preview-q'));
+            const mountPoint = document.createElement('div');
+            mountPoint.style.width = '100%';
+            previewQ.appendChild(mountPoint);
+            card.render(mountPoint);
         } catch (e) {
-            document.getElementById('preview-q').innerHTML = `<div style="color:red;">預覽錯誤：${e.message}</div>`;
+            previewQ.innerHTML = `<div style="color:red;">預覽錯誤：${e.message}</div>`;
         }
         document.getElementById('preview-a').style.display = 'none';
         document.getElementById('preview-exp').style.display = 'none';
