@@ -32,8 +32,8 @@ export async function createProfile(name) {
             cards: [] // 初始是空的學習紀錄
         };
         // 使用 name 當作 ID (簡單起見，實際應用可能要避免重複)
-        // 為了避免重複，我們加個後綴
-        const id = name + "_" + Math.floor(Math.random() * 1000);
+        // timestamp(base36) + random 確保唯一性
+        const id = name.trim().replace(/\s+/g, '_') + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
         await setDoc(doc(db, COLLECTION_NAME, id), newProfile);
         return { id, ...newProfile };
@@ -129,9 +129,12 @@ export async function saveUserProfile(id, localCards) {
             });
 
             // 3. 寫回雲端
-            // 使用 set({...}, {merge: true}) 來確保如果欄位有變動可以合併，
-            // 但在 transaction 內其實我們是取代 cards 欄位。
-            transaction.set(docRef, { cards: cleanCards }, { merge: true });
+            // 依文件是否存在明確分支，避免隱式 merge 行為吃掉 name/createdAt 欄位
+            if (sfDoc.exists()) {
+                transaction.update(docRef, { cards: cleanCards });
+            } else {
+                transaction.set(docRef, { cards: cleanCards });
+            }
         });
         console.log("Transaction successfully committed!");
     } catch (e) {
