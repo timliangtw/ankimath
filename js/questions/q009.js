@@ -158,6 +158,7 @@ const GeometryLogicGame = () => {
         if (opt.isFact === false) {
             setGameState('won');
         } else {
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();
             setGameState('playing');
         }
     };

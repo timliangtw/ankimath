@@ -131,6 +131,7 @@ const SequenceCheckerGame = () => {
         if (result.isValid) {
             setGameState('won');
         } else {
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();
             setGameState('playing');
         }
     };

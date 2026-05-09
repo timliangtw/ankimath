@@ -88,7 +88,7 @@ const App = () => {
             setShowExplanation(true);
         } else {
             setStatus('wrong');
-            // 答錯時也可以選擇是否直接顯示解釋，這裡我們先給提示
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();
             setShowExplanation(true);
         }
     };

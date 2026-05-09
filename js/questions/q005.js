@@ -59,9 +59,11 @@ const ShoppingProblem = () => {
             setGameState('won');
         } else if (selectedCoins < correctCoins) {
             setFeedback({ type: 'too_few', val: selectedCoins });
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();
             setGameState('playing');
         } else {
             setFeedback({ type: 'too_many', val: selectedCoins });
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();
             setGameState('playing');
         }
     };
