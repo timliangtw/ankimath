@@ -137,7 +137,7 @@ const MyQuestionComponent = () => {
                                 <${ShapeSVG} cells=${problem.layout[idx].cells} color=${problem.layout[idx].color} size=${20} />
                                 <span className="text-[10px] font-bold text-amber-400 mt-1">圖卡 ${problem.layout[idx].id}</span>
                             </div>
-                        `).reduce((acc, curr, i) => i === 0 ? [curr] : [...acc, html`<span className="text-amber-200 font-bold">+</span>`, curr], [])}
+                        `).reduce((acc, curr, i) => i === 0 ? [curr] : [...acc, html`<span key=${`sep-${i}`} className="text-amber-200 font-bold">+</span>`, curr], [])}
                     </div>
                 </div>
 
@@ -189,7 +189,7 @@ const MyQuestionComponent = () => {
                              />
                              <!-- 手動渲染解答 SVG -->
                              <svg width=${(Math.max(...allMysteryCells.map(c => c[0])) + 1) * 35} height=${(Math.max(...allMysteryCells.map(c => c[1])) + 1) * 35}>
-                                ${problem.layout.map(p => p.cells.map(c => html`
+                                ${problem.layout.flatMap(p => p.cells.map(c => html`
                                     <rect key=${`${p.id}-${c[0]}-${c[1]}`} x=${c[0] * 35} y=${c[1] * 35} width="35" height="35" fill=${p.color} rx="4" style=${{ stroke: 'white', strokeWidth: '1.5px' }} />
                                 `))}
                              </svg>
