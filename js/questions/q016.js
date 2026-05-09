@@ -190,7 +190,7 @@ const MyQuestionComponent = () => {
                              <!-- 手動渲染解答 SVG -->
                              <svg width=${(Math.max(...allMysteryCells.map(c => c[0])) + 1) * 35} height=${(Math.max(...allMysteryCells.map(c => c[1])) + 1) * 35}>
                                 ${problem.layout.map(p => p.cells.map(c => html`
-                                    <rect x=${c[0] * 35} y=${c[1] * 35} width="35" height="35" fill=${p.color} rx="4" style=${{ stroke: 'white', strokeWidth: '1.5px' }} />
+                                    <rect key=${`${p.id}-${c[0]}-${c[1]}`} x=${c[0] * 35} y=${c[1] * 35} width="35" height="35" fill=${p.color} rx="4" style=${{ stroke: 'white', strokeWidth: '1.5px' }} />
                                 `))}
                              </svg>
                         </div>
@@ -200,7 +200,7 @@ const MyQuestionComponent = () => {
                             </p>
                             <div className="mt-4 flex flex-wrap gap-2">
                                 ${problem.layout.map(p => html`
-                                    <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
+                                    <div key=${p.id} className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
                                         <div className="w-2 h-2 rounded-full" style=${{ backgroundColor: p.color }}></div>
                                         圖卡 ${p.id}
                                     </div>
