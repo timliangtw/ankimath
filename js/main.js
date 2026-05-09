@@ -10,6 +10,26 @@ let currentCard = null;
 let defaultQuestions = [];
 let currentProfileId = null;
 let isRating = false; // 防止評分按鈕重複點擊
+let previewRoot = null; // 追蹤預覽頁的 React root，避免 createRoot 重複警告
+let studyRoot = null;   // 追蹤學習頁的 React root
+
+// 掛載 React 組件，先 unmount 舊 root 再建新的
+function mountCard(card, container, existingRoot) {
+    if (existingRoot) { try { existingRoot.unmount(); } catch (e) {} }
+    const origCreateRoot = ReactDOM.createRoot;
+    let captured = null;
+    ReactDOM.createRoot = function (c, opts) {
+        captured = origCreateRoot.call(ReactDOM, c, opts);
+        ReactDOM.createRoot = origCreateRoot;
+        return captured;
+    };
+    try {
+        card.render(container);
+    } finally {
+        ReactDOM.createRoot = origCreateRoot;
+    }
+    return captured;
+}
 
 // --- 3. 核心邏輯 (Firestore & Anki 簡易演算法) ---
 
@@ -287,7 +307,7 @@ function loadNextCard() {
             const mountPoint = document.createElement('div');
             mountPoint.style.width = '100%';
             cardContent.appendChild(mountPoint);
-            currentCard.render(mountPoint);
+            studyRoot = mountCard(currentCard, mountPoint, studyRoot);
         } catch (error) {
             console.error("Render Error:", error);
             cardContent.innerHTML = `<div style="color:red; padding:20px;">渲染錯誤：${error.message}</div>`;
@@ -463,7 +483,7 @@ function previewQuestion(id) {
             const mountPoint = document.createElement('div');
             mountPoint.style.width = '100%';
             previewQ.appendChild(mountPoint);
-            card.render(mountPoint);
+            previewRoot = mountCard(card, mountPoint, previewRoot);
         } catch (e) {
             previewQ.innerHTML = `<div style="color:red;">預覽錯誤：${e.message}</div>`;
         }
