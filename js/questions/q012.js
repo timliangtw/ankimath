@@ -22,8 +22,8 @@ const MyQuestionComponent = () => {
             // 摺疊圖 (寬 100)
             foldedSvg: html`
                 <svg width="100" height="240" viewBox="0 0 100 240">
-                    <rect x="0" y="0" width="100" height="240" fill="#bae6fd" stroke="#0ea5e9" stroke-width="2" />
-                    <line x1="100" y1="0" x2="100" y2="240" stroke="#0ea5e9" stroke-width="4" />
+                    <rect x="0" y="0" width="100" height="240" fill="#bae6fd" stroke="#0ea5e9" strokeWidth="2" />
+                    <line x1="100" y1="0" x2="100" y2="240" stroke="#0ea5e9" strokeWidth="4" />
                     <rect x="0" y="20" width="30" height="40" fill="white" />
                     <polygon points="50,0 70,30 90,0" fill="white" />
                     <rect x="80" y="210" width="20" height="30" fill="white" />
@@ -33,8 +33,8 @@ const MyQuestionComponent = () => {
             // 展開圖 (寬 200)
             unfoldedSvg: html`
                 <svg width="200" height="240" viewBox="0 0 200 240">
-                    <rect x="0" y="0" width="200" height="240" fill="#bae6fd" stroke="#0ea5e9" stroke-width="2" />
-                    <line x1="100" y1="0" x2="100" y2="240" stroke="#0ea5e9" stroke-width="2" stroke-dasharray="8,4" />
+                    <rect x="0" y="0" width="200" height="240" fill="#bae6fd" stroke="#0ea5e9" strokeWidth="2" />
+                    <line x1="100" y1="0" x2="100" y2="240" stroke="#0ea5e9" strokeWidth="2" strokeDasharray="8,4" />
                     <rect x="0" y="20" width="30" height="40" fill="white" /><rect x="170" y="20" width="30" height="40" fill="white" />
                     <polygon points="50,0 70,30 90,0" fill="white" /><polygon points="110,0 130,30 150,0" fill="white" />
                     <rect x="80" y="210" width="40" height="30" fill="white" />
@@ -50,16 +50,16 @@ const MyQuestionComponent = () => {
             title: "摺線對稱練習",
             foldedSvg: html`
                 <svg width="100" height="240" viewBox="0 0 100 240">
-                    <rect x="0" y="0" width="100" height="240" fill="#bae6fd" stroke="#0ea5e9" stroke-width="2" />
-                    <line x1="100" y1="0" x2="100" y2="240" stroke="#0ea5e9" stroke-width="4" />
+                    <rect x="0" y="0" width="100" height="240" fill="#bae6fd" stroke="#0ea5e9" strokeWidth="2" />
+                    <line x1="100" y1="0" x2="100" y2="240" stroke="#0ea5e9" strokeWidth="4" />
                     <path d="M 100,60 L 60,90 L 100,120" fill="white" />
                     <path d="M 100,160 A 30,30 0 0 0 100,220" fill="white" />
                 </svg>
             `,
             unfoldedSvg: html`
                 <svg width="200" height="240" viewBox="0 0 200 240">
-                    <rect x="0" y="0" width="200" height="240" fill="#bae6fd" stroke="#0ea5e9" stroke-width="2" />
-                    <line x1="100" y1="0" x2="100" y2="240" stroke="#0ea5e9" stroke-width="2" stroke-dasharray="8,4" />
+                    <rect x="0" y="0" width="200" height="240" fill="#bae6fd" stroke="#0ea5e9" strokeWidth="2" />
+                    <line x1="100" y1="0" x2="100" y2="240" stroke="#0ea5e9" strokeWidth="2" strokeDasharray="8,4" />
                     <polygon points="100,60 60,90 100,120 140,90" fill="white" />
                     <circle cx="100" cy="190" r="30" fill="white" />
                 </svg>
@@ -73,16 +73,16 @@ const MyQuestionComponent = () => {
             title: "開口複製練習",
             foldedSvg: html`
                 <svg width="100" height="240" viewBox="0 0 100 240">
-                    <rect x="0" y="0" width="100" height="240" fill="#bae6fd" stroke="#0ea5e9" stroke-width="2" />
-                    <line x1="100" y1="0" x2="100" y2="240" stroke="#0ea5e9" stroke-width="4" />
+                    <rect x="0" y="0" width="100" height="240" fill="#bae6fd" stroke="#0ea5e9" strokeWidth="2" />
+                    <line x1="100" y1="0" x2="100" y2="240" stroke="#0ea5e9" strokeWidth="4" />
                     <circle cx="30" cy="60" r="20" fill="white" />
                     <rect x="20" y="160" width="40" height="40" fill="white" />
                 </svg>
             `,
             unfoldedSvg: html`
                 <svg width="200" height="240" viewBox="0 0 200 240">
-                    <rect x="0" y="0" width="200" height="240" fill="#bae6fd" stroke="#0ea5e9" stroke-width="2" />
-                    <line x1="100" y1="0" x2="100" y2="240" stroke="#0ea5e9" stroke-width="2" stroke-dasharray="8,4" />
+                    <rect x="0" y="0" width="200" height="240" fill="#bae6fd" stroke="#0ea5e9" strokeWidth="2" />
+                    <line x1="100" y1="0" x2="100" y2="240" stroke="#0ea5e9" strokeWidth="2" strokeDasharray="8,4" />
                     <circle cx="30" cy="60" r="20" fill="white" /><circle cx="170" cy="60" r="20" fill="white" />
                     <rect x="20" y="160" width="40" height="40" fill="white" /><rect x="140" y="160" width="40" height="40" fill="white" />
                 </svg>
