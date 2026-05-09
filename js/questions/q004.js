@@ -205,7 +205,8 @@ const SequenceCheckerGame = () => {
                             <div className="relative pt-6 pb-2 overflow-x-auto">
                                 <div className="flex items-center gap-1 md:gap-2 min-w-[600px]">
                                     ${seq.nums.map((num, idx) => html`
-                                        <div key=${idx} className=${`
+                                        <${React.Fragment} key=${idx}>
+                                        <div className=${`
                                             w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center text-lg md:text-2xl font-bold border-2 shrink-0 z-10 transition-colors duration-500
                                             ${isCorrect ? 'bg-green-50 border-green-200 text-green-700' :
                         isWrong && (idx === result.errorIndex || idx === result.errorIndex + 1) ? 'bg-red-50 border-red-200 text-red-600' :
@@ -238,6 +239,7 @@ const SequenceCheckerGame = () => {
                                                 `}
                                             </div>
                                         `}
+                                        <//>
                                     `)}
                                 </div>
                             </div>
