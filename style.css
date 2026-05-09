@@ -26,11 +26,11 @@ body {
     padding: 0;
     background-color: var(--bg-color);
     color: var(--text-color);
-    height: 100vh;
+    min-height: 100vh;    /* fallback: 舊版 iOS Safari */
+    min-height: 100dvh;   /* 動態視窗高度，手機鍵盤彈出時自動縮減 */
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    /* Allow global scrolling */
 }
 
 /* 通用容器 */
@@ -168,6 +168,7 @@ body {
 /* 底部控制列 */
 .controls {
     display: flex;
+    flex-wrap: wrap;   /* 小螢幕按鈕自動換行，防止溢出 */
     gap: 15px;
     width: 100%;
     justify-content: center;
