@@ -263,13 +263,12 @@ function loadNextCard() {
 
     const cardContent = document.getElementById('card-content');
 
-    // 重設「太簡單了」按鈕狀態
-    const btnEasy = document.getElementById('btn-easy');
-    if (btnEasy) {
-        btnEasy.disabled = false;
-        btnEasy.style.opacity = '1';
-        btnEasy.style.cursor = 'pointer';
-    }
+    // 重設所有評分按鈕（rateCard 會 disable 全部，這裡全部還原）
+    document.querySelectorAll('#rating-btns-area button').forEach(btn => {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+    });
 
     // 清空並重置容器
     cardContent.innerHTML = '';
