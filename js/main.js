@@ -8,6 +8,7 @@ let sessionQueue = []; // 當前學習隊列
 let currentCard = null;
 let defaultQuestions = [];
 let currentProfileId = null;
+let isRating = false; // 防止評分按鈕重複點擊
 
 // --- 3. 核心邏輯 (Firestore & Anki 簡易演算法) ---
 
@@ -118,11 +119,17 @@ async function loginProfile(profileId) {
     currentProfileId = profileId;
     localStorage.setItem('lastProfileId', profileId); // 記住登入狀態
 
-    // 載入該使用者的進度資料
-    const userData = await loadUserProfile(profileId);
+    // 載入該使用者的進度資料（失敗時降級為空進度，仍可正常使用）
+    let savedCards = [];
+    try {
+        const userData = await loadUserProfile(profileId);
+        savedCards = userData && userData.cards ? userData.cards : [];
+    } catch (e) {
+        console.warn("無法讀取雲端進度，以初始狀態繼續:", e);
+        // savedCards 保持 []，所有卡片以預設進度顯示
+    }
 
     // 合併邏輯 (Merge Content + Progress)
-    const savedCards = userData && userData.cards ? userData.cards : [];
 
     cards = defaultQuestions.map(defaultQ => {
         const savedCard = savedCards.find(c => c.id === defaultQ.id);
@@ -313,46 +320,57 @@ function showAnswer() {
 
 // 核心演算法 (SM-2 簡化版)
 async function rateCard(quality) {
-    const now = Date.now();
-    const dayMillis = 24 * 60 * 60 * 1000;
+    if (isRating) return;
+    isRating = true;
 
-    let cardIndex = cards.findIndex(c => c.id === currentCard.id);
-    let card = cards[cardIndex];
+    // 鎖住所有評分按鈕，防止重複提交
+    document.querySelectorAll('#rating-btns-area button').forEach(btn => btn.disabled = true);
 
-    // 更新時間戳記 (為了 Smart Merge)
-    card.lastUpdated = now;
+    try {
+        const now = Date.now();
+        const dayMillis = 24 * 60 * 60 * 1000;
 
-    if (quality < 3) {
-        // 答錯
-        card.reps = 0;
-        card.interval = 1;
-        card.nextReview = now + 60000; // 1 min later
+        const cardIndex = cards.findIndex(c => c.id === currentCard.id);
+        if (cardIndex === -1) return; // 安全檢查：卡片已不存在
+        const card = cards[cardIndex];
 
-        sessionQueue.shift();
-        sessionQueue.push(currentCard); // Put back to end
+        // 更新時間戳記 (為了 Smart Merge)
+        card.lastUpdated = now;
 
-    } else {
-        // 答對
-        if (card.reps === 0) {
+        if (quality < 3) {
+            // 答錯
+            card.reps = 0;
             card.interval = 1;
-        } else if (card.reps === 1) {
-            card.interval = 6;
+            card.nextReview = now + 60000; // 1 min later
+
+            sessionQueue.shift();
+            sessionQueue.push(currentCard); // Put back to end
+
         } else {
-            card.interval = Math.round(card.interval * card.ef);
+            // 答對
+            if (card.reps === 0) {
+                card.interval = 1;
+            } else if (card.reps === 1) {
+                card.interval = 6;
+            } else {
+                card.interval = Math.round(card.interval * card.ef);
+            }
+
+            card.reps += 1;
+            if (quality === 5) card.ef = card.ef + 0.1;
+            if (quality === 3) card.ef = Math.max(1.3, card.ef - 0.15);
+
+            card.nextReview = now + (card.interval * dayMillis);
+
+            sessionQueue.shift();
         }
 
-        card.reps += 1;
-        if (quality === 5) card.ef = card.ef + 0.1;
-        if (quality === 3) card.ef = Math.max(1.3, card.ef - 0.15);
-
-        card.nextReview = now + (card.interval * dayMillis);
-
-        sessionQueue.shift();
+        // 每次評分都同步存檔
+        await saveData();
+        loadNextCard();
+    } finally {
+        isRating = false;
     }
-
-    // 每次評分都同步存檔
-    await saveData();
-    loadNextCard();
 }
 
 // --- 5. 頁面切換 ---
