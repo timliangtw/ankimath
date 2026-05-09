@@ -1,6 +1,7 @@
 import loadQuestions from './questions/index.js';
 import { testConnection } from './firebase-config.js';
 import { getAllProfiles, createProfile, loadUserProfile, saveUserProfile } from './user-manager.js';
+import { VERSION } from './version.js';
 
 // --- 2. 應用程式狀態 ---
 let cards = [];
@@ -501,6 +502,9 @@ window.openSettings = openSettings;
 window.previewQuestion = previewQuestion;
 window.backToSettings = backToSettings;
 window.logout = logout;
+
+// 顯示版本號
+document.getElementById('app-version').textContent = VERSION;
 
 // 啟動
 initApp();
