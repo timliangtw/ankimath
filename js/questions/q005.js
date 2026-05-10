@@ -53,6 +53,8 @@ const ShoppingProblem = () => {
     };
 
     // 檢查答案
+    useEffect(() => { generateProblem(); }, []);
+
     const checkAnswer = (selectedCoins) => {
         if (selectedCoins === correctCoins) {
             setFeedback({ type: 'correct', val: selectedCoins });

@@ -9,7 +9,7 @@ const html = htm.bind(React.createElement);
 
 const MyQuestionComponent = () => {
     // --- 1. 狀態管理 (State) ---
-    const [currentIndex, setCurrentIndex] = useState(0);
+    const [currentIndex, setCurrentIndex] = useState(() => Math.floor(Math.random() * 3));
     const [selectedOption, setSelectedOption] = useState(null);
     const [feedback, setFeedback] = useState(null); // 'correct', 'wrong', or null
     const [score, setScore] = useState(0);

@@ -69,7 +69,7 @@ const PocketMoney = () => {
     };
 
     useEffect(() => {
-        generateProblem(false); // 第一次載入使用指定題目
+        generateProblem(true); // 每次進入自動出隨機題
     }, []);
 
     const checkAnswer = (ans) => {

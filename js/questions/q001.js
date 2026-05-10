@@ -1,97 +1,141 @@
-const { useState, useEffect } = React;
+const { useState } = React;
 const html = htm.bind(React.createElement);
 
-// --- 角色資料與設定 ---
-const CHARACTERS = [
-    { id: 'A', name: 'A', color: 'bg-red-400', avatar: '🦊', clue: '我不是排在最後一個。' },
-    { id: 'B', name: 'B', color: 'bg-blue-400', avatar: '🐰', clue: '我前面的人是 D。' },
-    { id: 'C', name: 'C', color: 'bg-green-400', avatar: '🐻', clue: '我後面有 2 個人。' },
-    { id: 'D', name: 'D', color: 'bg-purple-400', avatar: '🐱', clue: '我不是排在第一個。' },
+const PUZZLE_VARIANTS = [
+    {
+        order: ['A', 'C', 'D', 'B'],
+        characters: [
+            { id: 'A', name: 'A', color: 'bg-red-400', avatar: '🦊', clue: '我不是排在最後一個。' },
+            { id: 'B', name: 'B', color: 'bg-blue-400', avatar: '🐰', clue: '我前面的人是 D。' },
+            { id: 'C', name: 'C', color: 'bg-green-400', avatar: '🐻', clue: '我後面有 2 個人。' },
+            { id: 'D', name: 'D', color: 'bg-purple-400', avatar: '🐱', clue: '我不是排在第一個。' },
+        ],
+        hint: '試著先看看 C 說的話，他說「後面有2個人」，那他應該排在第幾個呢？',
+        steps: [
+            { color: 'green', title: '先找最確定的線索', body: 'C 說「後面有2個人」。4個位置中，只有第 2 個位置後面有2人，所以 C 一定在第 2 個。' },
+            { color: 'blue', title: '找出連在一起的人', body: 'B 說「前面是 D」，表示 D 和 B 相鄰（D→B）。第 2 是 C，所以只能是 D=3、B=4。' },
+            { color: 'red', title: '最後剩下的位置', body: '只剩第 1 個位置，所以 A 排第 1。確認：A「不是最後」✓，D「不是第一」✓。' },
+        ],
+        finalNote: '最終順序：A → C → D → B',
+    },
+    {
+        order: ['C', 'A', 'D', 'B'],
+        characters: [
+            { id: 'A', name: 'A', color: 'bg-red-400', avatar: '🦊', clue: '我後面有 2 個人。' },
+            { id: 'B', name: 'B', color: 'bg-blue-400', avatar: '🐰', clue: '我是最後一個。' },
+            { id: 'C', name: 'C', color: 'bg-green-400', avatar: '🐻', clue: '我排在最前面。' },
+            { id: 'D', name: 'D', color: 'bg-purple-400', avatar: '🐱', clue: '我前面的人是 A。' },
+        ],
+        hint: '試著先看 C 和 B 說的話，一個說最前、一個說最後，先把他們放好！',
+        steps: [
+            { color: 'green', title: '先找確定的兩端', body: 'C 說「排在最前面」→ C=第1個。B 說「是最後一個」→ B=第4個。' },
+            { color: 'blue', title: '用數量推理', body: 'A 說「後面有2個人」→ A 在第 2 個（後面有 D 和 B）。' },
+            { color: 'red', title: '驗證最後一個', body: 'D 說「前面是 A」。A 在第 2，D 在第 3，正好相鄰！所有提示都符合。' },
+        ],
+        finalNote: '最終順序：C → A → D → B',
+    },
+    {
+        order: ['D', 'A', 'C', 'B'],
+        characters: [
+            { id: 'A', name: 'A', color: 'bg-red-400', avatar: '🦊', clue: '我前面的人是 D。' },
+            { id: 'B', name: 'B', color: 'bg-blue-400', avatar: '🐰', clue: '我是最後一個。' },
+            { id: 'C', name: 'C', color: 'bg-green-400', avatar: '🐻', clue: '我後面只有 1 個人。' },
+            { id: 'D', name: 'D', color: 'bg-purple-400', avatar: '🐱', clue: '我後面有 3 個人。' },
+        ],
+        hint: '試著先看 D 說的話，他說「後面有3個人」，一共才4個位置，他能排在哪裡呢？',
+        steps: [
+            { color: 'green', title: '先找最確定的線索', body: 'D 說「後面有3個人」。只有第 1 個位置後面有3人，所以 D=第1個。' },
+            { color: 'blue', title: '找出連在一起的人', body: 'A 說「前面是 D」。D=第1，所以 A=第2，兩人緊鄰。' },
+            { color: 'red', title: '用數量定位', body: 'C 說「後面只有1個人」→ C=第3個。B 說「是最後一個」→ B=第4個。全部對上！' },
+        ],
+        finalNote: '最終順序：D → A → C → B',
+    },
+    {
+        order: ['B', 'D', 'A', 'C'],
+        characters: [
+            { id: 'A', name: 'A', color: 'bg-red-400', avatar: '🦊', clue: '我後面只有 1 個人。' },
+            { id: 'B', name: 'B', color: 'bg-blue-400', avatar: '🐰', clue: '我後面有 3 個人。' },
+            { id: 'C', name: 'C', color: 'bg-green-400', avatar: '🐻', clue: '我是最後一個。' },
+            { id: 'D', name: 'D', color: 'bg-purple-400', avatar: '🐱', clue: '我前面的人是 B。' },
+        ],
+        hint: '試著先看 B 和 C 說的話，B說「後面有3個人」，C說「是最後一個」，先把他們放好！',
+        steps: [
+            { color: 'green', title: '先找確定的兩端', body: 'B 說「後面有3個人」→ B=第1個。C 說「是最後一個」→ C=第4個。' },
+            { color: 'blue', title: '找出連在一起的人', body: 'D 說「前面是 B」。B=第1，所以 D=第2，緊鄰在後。' },
+            { color: 'red', title: '驗證最後的位置', body: 'A 說「後面只有1個人」→ A=第3個（後面只有C）。所有提示都對上了！' },
+        ],
+        finalNote: '最終順序：B → D → A → C',
+    },
 ];
 
-// 正確答案順序 (A, C, D, B)
-const CORRECT_ORDER = ['A', 'C', 'D', 'B'];
+const STEP_COLORS = {
+    green: { dot: 'bg-green-100 text-green-700', title: 'text-slate-700' },
+    blue:  { dot: 'bg-blue-100 text-blue-700',  title: 'text-slate-700' },
+    red:   { dot: 'bg-red-100 text-red-700',    title: 'text-slate-700' },
+};
 
-// --- 主程式邏輯 ---
+const pickVariant = (exclude) => {
+    const pool = exclude ? PUZZLE_VARIANTS.filter(v => v !== exclude) : PUZZLE_VARIANTS;
+    return pool[Math.floor(Math.random() * pool.length)];
+};
+
 const LogicGame = () => {
-    // 狀態：目前 4 個位置上分別是誰 (null 代表空的)
+    const [variant, setVariant] = useState(() => pickVariant(null));
     const [slots, setSlots] = useState([null, null, null, null]);
-    // 狀態：目前選中的角色 (準備放置)
     const [selectedChar, setSelectedChar] = useState(null);
-    // 狀態：回饋與解答顯示
-    const [feedback, setFeedback] = useState(null); // 'correct', 'wrong', null
+    const [feedback, setFeedback] = useState(null);
     const [showExplanation, setShowExplanation] = useState(false);
 
-    // 處理點擊角色庫中的角色
     const handleCharClick = (charId) => {
         if (feedback === 'correct') return;
-        // 如果該角色已經在盤面上了，先把它拿下來
         if (slots.includes(charId)) {
-            const newSlots = slots.map(s => s === charId ? null : s);
-            setSlots(newSlots);
+            setSlots(slots.map(s => s === charId ? null : s));
         }
         setSelectedChar(charId);
     };
 
-    // 處理點擊目標位置
     const handleSlotClick = (index) => {
         if (feedback === 'correct') return;
-
-        // 如果有點選角色，則放置該角色
         if (selectedChar) {
             const newSlots = [...slots];
-
-            // 1. 如果選中的角色原本就在其他格子，先清空舊格子
             const oldIndex = slots.indexOf(selectedChar);
-            if (oldIndex !== -1) {
-                newSlots[oldIndex] = null;
-            }
-
-            // 2. 放置新角色
+            if (oldIndex !== -1) newSlots[oldIndex] = null;
             newSlots[index] = selectedChar;
             setSlots(newSlots);
-            setSelectedChar(null); // 放完後取消選取
-        } else {
-            // 如果沒選角色，點擊格子代表把格子裡的人拿下來
-            if (slots[index]) {
-                const newSlots = [...slots];
-                newSlots[index] = null;
-                setSlots(newSlots);
-            }
+            setSelectedChar(null);
+        } else if (slots[index]) {
+            const newSlots = [...slots];
+            newSlots[index] = null;
+            setSlots(newSlots);
         }
     };
 
-    // 檢查答案
     const checkAnswer = () => {
-        // 檢查是否都填滿了
-        if (slots.some(s => s === null)) {
-            // 這裡不使用 alert，改用簡單的 UI 提示或忽略
-            return;
-        }
-
-        // 比對答案
-        const isCorrect = slots.every((charId, index) => charId === CORRECT_ORDER[index]);
-
+        if (slots.some(s => s === null)) return;
+        const isCorrect = slots.every((charId, i) => charId === variant.order[i]);
         if (isCorrect) {
             setFeedback('correct');
             setShowExplanation(true);
         } else {
             setFeedback('wrong');
-            if (window.onIncorrectAnswer) window.onIncorrectAnswer();setShowExplanation(true);
+            if (window.onIncorrectAnswer) window.onIncorrectAnswer();
+            setShowExplanation(true);
         }
     };
 
-    // 重置
     const resetGame = () => {
+        setVariant(v => pickVariant(v));
         setSlots([null, null, null, null]);
         setFeedback(null);
         setShowExplanation(false);
         setSelectedChar(null);
     };
 
+    const pos3Char = variant.characters.find(c => c.id === variant.order[2]);
+
     return html`
         <div className="w-full font-sans text-left mx-auto">
-            
+
             <!-- 標題區 -->
             <div className="text-center mb-8">
                 <div className="inline-block bg-yellow-400 text-white px-4 py-1 rounded-full font-bold shadow-sm mb-2 transform -rotate-2">
@@ -101,9 +145,9 @@ const LogicGame = () => {
                 <p className="text-slate-500 mt-2">請根據提示，幫 A, B, C, D 排排隊</p>
             </div>
 
-            <!-- 提示區 (Clues) -->
+            <!-- 提示區 -->
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                ${CHARACTERS.map(char => html`
+                ${variant.characters.map(char => html`
                     <div key=${char.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-3">
                         <div className=${`w-12 h-12 ${char.color} rounded-full flex items-center justify-center text-2xl shadow-inner shrink-0`}>
                             ${char.avatar}
@@ -116,9 +160,8 @@ const LogicGame = () => {
                 `)}
             </div>
 
-            <!-- 遊戲區 (Slots) -->
+            <!-- 遊戲區 -->
             <div className="bg-slate-100 p-4 md:p-8 rounded-3xl border-2 border-slate-200 shadow-inner mb-8 relative">
-                <!-- 位置標示 -->
                 <div className="flex justify-between w-full mb-2 px-1">
                     ${['第1個', '第2個', '第3個', '第4個'].map((label, i) => html`
                         <div key=${i} className="text-xs md:text-sm font-bold text-slate-400 w-16 md:w-24 text-center">
@@ -127,16 +170,15 @@ const LogicGame = () => {
                     `)}
                 </div>
 
-                <!-- 排隊格子 -->
                 <div className="flex justify-between items-center relative z-10 gap-2">
                     ${slots.map((charId, index) => {
-        const char = CHARACTERS.find(c => c.id === charId);
-        return html`
-                            <div 
+                        const char = variant.characters.find(c => c.id === charId);
+                        return html`
+                            <div
                                 key=${index}
                                 onClick=${() => handleSlotClick(index)}
                                 className=${`
-                                    w-16 h-24 md:w-24 md:h-32 bg-white rounded-xl border-2 border-dashed 
+                                    w-16 h-24 md:w-24 md:h-32 bg-white rounded-xl border-2 border-dashed
                                     flex items-center justify-center cursor-pointer transition-all duration-200
                                     ${!char ? 'border-slate-300 hover:bg-slate-50' : 'border-transparent bg-transparent'}
                                     ${selectedChar && !char ? 'animate-pulse ring-2 ring-yellow-400 ring-offset-2' : ''}
@@ -156,24 +198,21 @@ const LogicGame = () => {
                                 `}
                             </div>
                         `;
-    })}
-                    
-                    <!-- 地板線 -->
+                    })}
                     <div className="absolute bottom-2 left-0 w-full h-2 bg-slate-200 rounded-full -z-10"></div>
                 </div>
 
-                <!-- 題目問句重點 -->
                 <div className="absolute -bottom-5 right-2 md:right-6 bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 rotate-1">
-                     <span className="text-slate-500 text-sm font-bold">誰排在第 3 個？</span>
+                    <span className="text-slate-500 text-sm font-bold">誰排在第 3 個？</span>
                 </div>
             </div>
 
-            <!-- 角色選擇區 (Inventory) -->
+            <!-- 角色選擇區 -->
             <div className="flex justify-center gap-4 mb-8">
-                ${CHARACTERS.map(char => {
-        const isPlaced = slots.includes(char.id);
-        const isSelected = selectedChar === char.id;
-        return html`
+                ${variant.characters.map(char => {
+                    const isPlaced = slots.includes(char.id);
+                    const isSelected = selectedChar === char.id;
+                    return html`
                         <button
                             key=${char.id}
                             onClick=${() => handleCharClick(char.id)}
@@ -187,7 +226,7 @@ const LogicGame = () => {
                             ${char.name}
                         </button>
                     `;
-    })}
+                })}
             </div>
 
             <!-- 控制區 -->
@@ -205,7 +244,7 @@ const LogicGame = () => {
                             ${feedback === 'correct' ? '🎉 答對了！太厲害了！' : '🤔 嗯...好像哪裡怪怪的，再檢查一下？'}
                         </div>
                         ${feedback === 'wrong' ? html`
-                            <button 
+                            <button
                                 onClick=${() => setFeedback(null)}
                                 className="text-slate-500 underline hover:text-slate-700"
                             >
@@ -222,10 +261,7 @@ const LogicGame = () => {
                     ${feedback === 'wrong' ? html`
                         <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl mb-4 text-center">
                             <p className="text-yellow-800 font-bold mb-2">💡 小提示</p>
-                            <p className="text-slate-600">
-                                試著先看看 <strong className="text-green-600">C</strong> 說的話，
-                                他說「後面有2個人」，那他應該排在第幾個呢？
-                            </p>
+                            <p className="text-slate-600">${variant.hint}</p>
                         </div>
                     ` : null}
 
@@ -236,45 +272,27 @@ const LogicGame = () => {
                                 邏輯解密步驟
                             </h3>
                             <ul className="space-y-4">
-                                <li className="flex gap-3">
-                                    <span className="bg-green-100 text-green-700 font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0">1</span>
-                                    <div>
-                                        <p className="font-bold text-slate-700">先找最確定的線索</p>
-                                        <p className="text-slate-600 text-sm">
-                                            C 說「後面有2個人」。因為總共才4個位置，所以 C 一定在 <strong className="text-green-600">第 2 個</strong>。
-                                            <br/><span className="text-xs text-slate-400">(如果是第1個後面有3人，第3個後面只有1人)</span>
-                                        </p>
-                                    </div>
-                                </li>
-                                <li className="flex gap-3">
-                                    <span className="bg-blue-100 text-blue-700 font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0">2</span>
-                                    <div>
-                                        <p className="font-bold text-slate-700">找出連在一起的人</p>
-                                        <p className="text-slate-600 text-sm">
-                                            B 說「前面是 D」。這表示 <strong className="text-purple-600">D</strong> 和 <strong className="text-blue-600">B</strong> 必須黏在一起 (D, B)。
-                                            因為第 2 個位置已經是 C 了，所以 D 和 B 只能排在 <strong className="text-slate-800">第 3 和 第 4</strong>。
-                                        </p>
-                                    </div>
-                                </li>
-                                <li className="flex gap-3">
-                                    <span className="bg-red-100 text-red-700 font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0">3</span>
-                                    <div>
-                                        <p className="font-bold text-slate-700">最後剩下的位置</p>
-                                        <p className="text-slate-600 text-sm">
-                                            只剩下第 1 個位置了，那一定就是 <strong className="text-red-600">A</strong> 囉！
-                                            <br/>檢查一下：A說「我不是最後」(正確)，D說「我不是第一」(正確)。
-                                        </p>
-                                    </div>
-                                </li>
+                                ${variant.steps.map((step, i) => {
+                                    const c = STEP_COLORS[step.color];
+                                    return html`
+                                        <li key=${i} className="flex gap-3">
+                                            <span className=${`${c.dot} font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0`}>${i + 1}</span>
+                                            <div>
+                                                <p className="font-bold text-slate-700">${step.title}</p>
+                                                <p className="text-slate-600 text-sm">${step.body}</p>
+                                            </div>
+                                        </li>
+                                    `;
+                                })}
                                 <li className="p-3 bg-amber-50 rounded-lg border border-amber-100 mt-2">
                                     <p className="font-bold text-amber-800">
-                                        最終答案：第 3 個位置是 <span className="text-2xl align-middle">🐱</span> D！
+                                        ${variant.finalNote}。第 3 個是 ${pos3Char.avatar} ${pos3Char.name}！
                                     </p>
                                 </li>
                             </ul>
                             <div className="mt-6 text-center">
                                 <button onClick=${resetGame} className="px-6 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 font-bold">
-                                    再玩一次
+                                    換一題試試
                                 </button>
                             </div>
                         </div>
