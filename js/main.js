@@ -361,6 +361,7 @@ async function rateCard(quality) {
             // 答錯
             card.reps = 0;
             card.interval = 1;
+            card.ef = Math.max(1.3, card.ef - 0.20);
             card.nextReview = now + 60000; // 1 min later
 
             sessionQueue.shift();
