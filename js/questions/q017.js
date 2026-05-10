@@ -99,29 +99,6 @@ const EggTartProblem = () => {
                 </p>
             </div>
 
-            <!-- 視覺示意 -->
-            <div className="flex items-center justify-center gap-3 mb-6 flex-wrap">
-                <div className="bg-amber-50 border-2 border-amber-200 rounded-xl px-4 py-3 text-center">
-                    <div className="text-2xl mb-1">${'🥮'.repeat(Math.min(A, 5))}${A > 5 ? '...' : ''}</div>
-                    <div className="text-sm text-amber-700 font-bold">每盒 ${A} 個 × ${B} 盒</div>
-                </div>
-                <div className="text-2xl text-slate-400 font-bold">=</div>
-                <div className="bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-center">
-                    <div className="text-2xl font-black text-slate-700">${total} 個</div>
-                    <div className="text-sm text-slate-500">蛋塔總數</div>
-                </div>
-                <div className="text-2xl text-slate-400 font-bold">÷</div>
-                <div className="bg-blue-50 border-2 border-blue-200 rounded-xl px-4 py-3 text-center">
-                    <div className="text-2xl font-black text-blue-700">${C}</div>
-                    <div className="text-sm text-blue-600">新的每盒數</div>
-                </div>
-                <div className="text-2xl text-slate-400 font-bold">=</div>
-                <div className="bg-green-50 border-2 border-green-200 rounded-xl px-4 py-3 text-center min-w-[64px]">
-                    <div className="text-2xl font-black text-green-700">？</div>
-                    <div className="text-sm text-green-600">盒</div>
-                </div>
-            </div>
-
             <!-- 四個選項 -->
             <div className="grid grid-cols-2 gap-3 mb-6">
                 ${options.map((opt, idx) => {
