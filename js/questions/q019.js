@@ -169,31 +169,10 @@ const IslandTripProblem = () => {
             <!-- 答對回饋 -->
             ${gameState === 'correct' && html`
                 <div className="bg-green-50 border border-green-200 rounded-2xl p-5 text-center mb-4">
-                    <div className="text-green-600 font-bold text-xl mb-3">🎉 答對了！</div>
-                    <div className="bg-white rounded-xl p-4 text-left border border-green-100 text-sm space-y-3">
-                        ${problem.details.map((d, i) => {
-                            const isWinner = d.day === problem.correct;
-                            return html`
-                                <div key=${i} className=${`rounded-lg p-3 ${isWinner ? 'bg-green-50 border border-green-200' : 'bg-slate-50'}`}>
-                                    <div className=${`font-bold mb-1 ${isWinner ? 'text-green-700' : 'text-slate-600'}`}>
-                                        2月${d.day}日出發（${d.dowFull}）
-                                        ${isWinner ? html`<span className="ml-2 text-green-600">← 最省 ✓</span>` : ''}
-                                    </div>
-                                    <div className="text-xs text-slate-500">住宿夜晚：${d.nights}</div>
-                                    <div className=${`text-xs font-bold mt-1 ${isWinner ? 'text-green-600' : 'text-red-500'}`}>
-                                        貴的夜晚：${d.expensive} 天
-                                    </div>
-                                </div>
-                            `;
-                        })}
-                        <div className="border-t border-green-100 pt-2 flex justify-between items-center">
-                            <span className="font-bold">最省方案：</span>
-                            <span className="font-black text-green-700 text-lg">2月${problem.correct}日（星期六）出發 ✓</span>
-                        </div>
-                    </div>
+                    <div className="text-green-600 font-bold text-xl mb-4">🎉 答對了！</div>
                     <button
                         onClick=${reset}
-                        className="mt-4 px-6 py-2 bg-amber-400 hover:bg-amber-500 text-white font-bold rounded-xl transition-colors shadow-sm"
+                        className="px-6 py-2 bg-amber-400 hover:bg-amber-500 text-white font-bold rounded-xl transition-colors shadow-sm"
                     >
                         再試一題（換數字）
                     </button>

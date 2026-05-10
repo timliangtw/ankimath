@@ -161,24 +161,10 @@ const EggTartProblem = () => {
 
             ${gameState === 'correct' && html`
                 <div className="bg-green-50 border border-green-200 rounded-2xl p-5 text-center mb-4">
-                    <div className="text-green-600 font-bold text-xl mb-3">🎉 答對了！</div>
-                    <div className="bg-white rounded-xl p-4 text-left text-slate-700 space-y-2 border border-green-100">
-                        <div className="flex justify-between items-center">
-                            <span>蛋塔總數：</span>
-                            <span className="font-black text-amber-600">${A} × ${B} = ${total} 個</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span>改成每盒 ${C} 個：</span>
-                            <span className="font-black text-blue-600">${total} ÷ ${C} = ${D} 盒</span>
-                        </div>
-                        <div className="border-t border-green-100 pt-2 flex justify-between items-center">
-                            <span className="font-bold">答案：</span>
-                            <span className="font-black text-green-700 text-xl">${D} 盒 ✓</span>
-                        </div>
-                    </div>
+                    <div className="text-green-600 font-bold text-xl mb-4">🎉 答對了！</div>
                     <button
                         onClick=${newProblem}
-                        className="mt-4 px-6 py-2 bg-amber-400 hover:bg-amber-500 text-white font-bold rounded-xl transition-colors shadow-sm"
+                        className="px-6 py-2 bg-amber-400 hover:bg-amber-500 text-white font-bold rounded-xl transition-colors shadow-sm"
                     >
                         再試一題（換數字）
                     </button>

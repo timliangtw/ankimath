@@ -144,28 +144,10 @@ const JapanTripProblem = () => {
             <!-- 答對回饋 -->
             ${gameState === 'correct' && html`
                 <div className="bg-green-50 border border-green-200 rounded-2xl p-5 text-center mb-4">
-                    <div className="text-green-600 font-bold text-xl mb-3">🎉 答對了！</div>
-                    <div className="bg-white rounded-xl p-4 text-left text-slate-700 space-y-2 border border-green-100 text-sm">
-                        <div className="flex justify-between">
-                            <span>2 月的星期四：</span>
-                            <span className="font-bold text-slate-600">1, 8, 15, 22, 29 日</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>${ORDINAL_LABELS[problem.ordinal]}個星期四：</span>
-                            <span className="font-black text-blue-600">2 月 ${problem.tripStart} 日（出發）</span>
-                        </div>
-                        <div className="flex justify-between flex-wrap gap-1">
-                            <span>${problem.tripLength}天旅遊：</span>
-                            <span className="font-bold text-slate-600">${tripDays}</span>
-                        </div>
-                        <div className="border-t border-green-100 pt-2 flex justify-between items-center">
-                            <span className="font-bold">結束日：</span>
-                            <span className="font-black text-green-700 text-xl">2 月 ${problem.correct} 日 ✓</span>
-                        </div>
-                    </div>
+                    <div className="text-green-600 font-bold text-xl mb-4">🎉 答對了！</div>
                     <button
                         onClick=${reset}
-                        className="mt-4 px-6 py-2 bg-blue-400 hover:bg-blue-500 text-white font-bold rounded-xl transition-colors shadow-sm"
+                        className="px-6 py-2 bg-blue-400 hover:bg-blue-500 text-white font-bold rounded-xl transition-colors shadow-sm"
                     >
                         再試一題（換數字）
                     </button>
