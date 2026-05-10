@@ -254,13 +254,20 @@ function updateHomeStats() {
 
 function startSession() {
     const now = Date.now();
-    // 找出所有到期或還沒學過的卡片
-    sessionQueue = cards.filter(c => c.nextReview <= now);
+
+    // 複習題優先（學過且到期），按最久未複習排序
+    const reviews = cards
+        .filter(c => c.reps > 0 && c.nextReview <= now)
+        .sort((a, b) => a.nextReview - b.nextReview);
+
+    // 新題補後面（從未學過）
+    const newCards = cards.filter(c => c.reps === 0);
+
+    sessionQueue = [...reviews, ...newCards];
 
     if (sessionQueue.length === 0) {
-        // 如果沒有到期的，可以練習一些未來的，或是隨機選幾題複習
-        alert("目前沒有到期的題目，但我們還是來練習一下吧！(隨機挑選 5 題)");
-        sessionQueue = [...cards].sort(() => Math.random() - 0.5).slice(0, 5);
+        alert("目前沒有到期的題目，但我們還是來練習一下吧！(隨機挑選 3 題)");
+        sessionQueue = [...cards].sort(() => Math.random() - 0.5).slice(0, 3);
     }
 
     if (sessionQueue.length > 0) {
