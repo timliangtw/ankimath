@@ -87,13 +87,20 @@ const NumberDetective = () => {
         // 干擾項 C: 隨機偶數
         distractors.push((Math.floor(Math.random() * 8) + 1) * 10 + 2);
 
-        // 組合選項並打亂
+        // 組合選項並打亂，去除重複
         let finalOptions = [];
-        // 特別保留您原本題目要求的選項組合 (當 sum 為 6 時)
         if (newSum === 6) {
             finalOptions = [60, 42, 30, 24];
         } else {
-            finalOptions = [correctAnswer, ...distractors].slice(0, 4);
+            const pool = [correctAnswer, ...distractors];
+            finalOptions = [...new Set(pool)];
+            // 若去重後不足 4 個，補充其他 10 的倍數
+            let extra = 10;
+            while (finalOptions.length < 4) {
+                if (!finalOptions.includes(extra)) finalOptions.push(extra);
+                extra += 10;
+            }
+            finalOptions = finalOptions.slice(0, 4);
         }
 
         // Shuffle
