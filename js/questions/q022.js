@@ -123,15 +123,15 @@ const CalendarProblem = () => {
                     ${days.map(day => {
                         const weekday = getWeekday(day);
                         const inCourse = day >= startDay && day <= endDay && CLASS_DAYS.has(weekday);
-                        const isLeaveDay = inCourse && weekday === leaveWeekday;
+                        const showLeaveDay = gameState === 'correct' && inCourse && weekday === leaveWeekday;
 
                         return html`
                             <div
                                 key=${day}
                                 className=${`
                                     h-9 flex items-center justify-center rounded-xl font-bold border
-                                    ${isLeaveDay ? 'bg-blue-100 text-blue-700 border-blue-300' : ''}
-                                    ${inCourse && !isLeaveDay ? 'bg-amber-50 text-slate-700 border-amber-100' : ''}
+                                    ${showLeaveDay ? 'bg-blue-100 text-blue-700 border-blue-300' : ''}
+                                    ${inCourse && !showLeaveDay ? 'bg-amber-50 text-slate-700 border-amber-100' : ''}
                                     ${!inCourse ? 'bg-slate-50 text-slate-300 border-slate-100' : ''}
                                 `}
                             >
