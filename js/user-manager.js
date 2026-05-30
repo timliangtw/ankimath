@@ -1,5 +1,5 @@
 import { db } from './firebase-config.js';
-import { collection, doc, getDocs, getDoc, setDoc, runTransaction } from "firebase/firestore";
+import { collection, doc, getDocs, getDoc, setDoc, updateDoc, runTransaction } from "firebase/firestore";
 
 // 使用者集合名稱
 const COLLECTION_NAME = "users";
@@ -28,6 +28,7 @@ export async function createProfile(name) {
     try {
         const newProfile = {
             name: name,
+            questionBank: inferQuestionBankFromName(name),
             createdAt: Date.now(),
             cards: [] // 初始是空的學習紀錄
         };
@@ -41,6 +42,18 @@ export async function createProfile(name) {
         console.error("Error creating profile:", e);
         throw e;
     }
+}
+
+export function inferQuestionBankFromName(name) {
+    const normalized = (name || '').trim().toLowerCase();
+    if (normalized === 'natasha') return 'sister';
+    return 'brother';
+}
+
+export async function updateProfileSettings(id, settings) {
+    if (!id) return;
+    const docRef = doc(db, COLLECTION_NAME, id);
+    await updateDoc(docRef, JSON.parse(JSON.stringify(settings)));
 }
 
 // 讀取特定 Profile 的資料

@@ -2,7 +2,14 @@
 // 這樣使用者只需要將檔案放入 (如 q008.js)，不需要修改此檔案
 // 限制：檔名必須是 q001, q002... 連續編號
 
-async function loadQuestions() {
+const VALID_BANKS = new Set(['brother', 'sister']);
+
+function normalizeBank(bank) {
+    return VALID_BANKS.has(bank) ? bank : 'brother';
+}
+
+async function loadQuestions(bank = 'brother') {
+    const questionBank = normalizeBank(bank);
     const questions = [];
     let index = 1;
     const maxLimit = 999; // 避免無窮迴圈的保險機制
@@ -13,7 +20,7 @@ async function loadQuestions() {
     while (index <= maxLimit) {
         // 格式化編號：將 1 轉成 "001"
         const idStr = index.toString().padStart(3, '0');
-        const filename = `./q${idStr}.js`;
+        const filename = `./${questionBank}/q${idStr}.js`;
 
         try {
             // 動態引入

@@ -8,10 +8,11 @@
  * 5. 全程無 JS console 錯誤
  */
 
-import pkg from '/Users/tim_liang/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/.pnpm/playwright@1.59.1/node_modules/playwright/index.js';
+import pkg from '/Users/tim_liang/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/.pnpm/playwright@1.60.0/node_modules/playwright/index.js';
 const { chromium } = pkg;
 
-const URL = 'https://timliangtw.github.io/ankimath/?debug';
+const BASE_URL = process.env.BASE_URL || 'https://timliangtw.github.io/ankimath/';
+const URL = `${BASE_URL}?debug&bank=${process.env.BANK || 'brother'}`;
 const TIMEOUT = 15000;
 
 let passed = 0;
@@ -58,7 +59,10 @@ async function getQuestionIds(page) {
     });
 }
 
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({
+    headless: true,
+    executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+});
 const jsErrors = [];
 
 try {

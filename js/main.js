@@ -1,6 +1,6 @@
 import loadQuestions from './questions/index.js';
 import { testConnection } from './firebase-config.js';
-import { getAllProfiles, createProfile, loadUserProfile, saveUserProfile } from './user-manager.js';
+import { getAllProfiles, createProfile, loadUserProfile, saveUserProfile, updateProfileSettings, inferQuestionBankFromName } from './user-manager.js';
 import { VERSION } from './version.js';
 
 // --- 2. 應用程式狀態 ---
@@ -9,6 +9,7 @@ let sessionQueue = []; // 當前學習隊列
 let currentCard = null;
 let defaultQuestions = [];
 let currentProfileId = null;
+let currentQuestionBank = 'brother';
 let isRating = false; // 防止評分按鈕重複點擊
 let previewRoot = null; // 追蹤預覽頁的 React root，避免 createRoot 重複警告
 let studyRoot = null;   // 追蹤學習頁的 React root
@@ -33,6 +34,40 @@ function mountCard(card, container, existingRoot) {
 
 // --- 3. 核心邏輯 (Firestore & Anki 簡易演算法) ---
 
+const VALID_QUESTION_BANKS = new Set(['brother', 'sister']);
+
+function normalizeQuestionBank(bank) {
+    return VALID_QUESTION_BANKS.has(bank) ? bank : 'brother';
+}
+
+function progressIdFor(bank, questionId) {
+    return `${normalizeQuestionBank(bank)}/${questionId}`;
+}
+
+function getBankFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return normalizeQuestionBank(urlParams.get('bank') || 'brother');
+}
+
+async function loadQuestionBank(bank) {
+    currentQuestionBank = normalizeQuestionBank(bank);
+    defaultQuestions = await loadQuestions(currentQuestionBank);
+    console.log(`Total questions loaded for ${currentQuestionBank}:`, defaultQuestions.length);
+}
+
+function buildInitialCard(defaultQ, savedCard = null) {
+    const progressId = progressIdFor(currentQuestionBank, defaultQ.id);
+    return {
+        ...defaultQ,
+        progressId,
+        interval: savedCard?.interval ?? 0,
+        reps: savedCard?.reps ?? 0,
+        ef: savedCard?.ef ?? 2.5,
+        nextReview: savedCard?.nextReview ?? 0,
+        lastUpdated: savedCard?.lastUpdated
+    };
+}
+
 // 初始化
 async function initApp() {
     const loadingEl = document.getElementById('startup-loading');
@@ -42,24 +77,15 @@ async function initApp() {
     const textEl = statusEl.querySelector('span');
 
     try {
-        // 1. 載入預設題目 (Code)
-        loadingMsg.innerText = "載入題目中...";
-        defaultQuestions = await loadQuestions();
-        console.log("Total questions loaded:", defaultQuestions.length);
-
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('debug')) {
             console.log("進入除錯模式 (Debug Mode)，跳過資料庫與登入");
             statusEl.className = 'db-status disconnected';
             textEl.innerText = "Debug (未連線)";
             currentProfileId = "debug_user";
-            cards = defaultQuestions.map(defaultQ => ({
-                ...defaultQ,
-                interval: 0,
-                reps: 0,
-                ef: 2.5,
-                nextReview: 0
-            }));
+            loadingMsg.innerText = "載入題目中...";
+            await loadQuestionBank(getBankFromUrl());
+            cards = defaultQuestions.map(defaultQ => buildInitialCard(defaultQ));
             updateHomeStats();
             loadingEl.style.display = 'none';
             return;
@@ -142,39 +168,36 @@ async function loginProfile(profileId) {
 
     // 載入該使用者的進度資料（失敗時降級為空進度，仍可正常使用）
     let savedCards = [];
+    let userData = null;
     try {
-        const userData = await loadUserProfile(profileId);
+        userData = await loadUserProfile(profileId);
         savedCards = userData && userData.cards ? userData.cards : [];
     } catch (e) {
         console.warn("無法讀取雲端進度，以初始狀態繼續:", e);
         // savedCards 保持 []，所有卡片以預設進度顯示
     }
 
-    // 合併邏輯 (Merge Content + Progress)
+    const urlBank = new URLSearchParams(window.location.search).get('bank');
+    const isTestProfile = (userData?.name || '').trim().toLowerCase() === 'test';
+    const inferredBank = userData?.questionBank || inferQuestionBankFromName(userData?.name);
+    const selectedBank = isTestProfile && urlBank ? normalizeQuestionBank(urlBank) : normalizeQuestionBank(inferredBank);
 
+    if (userData && !userData.questionBank) {
+        updateProfileSettings(profileId, { questionBank: selectedBank }).catch(e => {
+            console.warn("無法寫入題庫設定，仍以本次推斷題庫繼續:", e);
+        });
+    }
+
+    await loadQuestionBank(selectedBank);
+
+    // 合併邏輯 (Merge Content + Progress)
     cards = defaultQuestions.map(defaultQ => {
-        const savedCard = savedCards.find(c => c.id === defaultQ.id);
-        if (savedCard) {
-            return {
-                ...defaultQ, // 使用最新的 Code (q, a, render...)
-                // 覆蓋進度
-                reps: savedCard.reps,
-                interval: savedCard.interval,
-                ef: savedCard.ef,
-                nextReview: savedCard.nextReview
-            };
-        } else {
-            return {
-                ...defaultQ,
-                interval: 0,
-                reps: 0,
-                ef: 2.5,
-                nextReview: 0
-            };
-        }
+        const newProgressId = progressIdFor(currentQuestionBank, defaultQ.id);
+        const savedCard = savedCards.find(c => c.id === newProgressId) || savedCards.find(c => c.id === defaultQ.id);
+        return buildInitialCard(defaultQ, savedCard);
     });
 
-    console.log(`User ${profileId} loaded with ${cards.length} cards.`);
+    console.log(`User ${profileId} loaded ${currentQuestionBank} with ${cards.length} cards.`);
     updateHomeStats();
 }
 
@@ -192,7 +215,7 @@ async function saveData() {
 
     // 我們只存需要的欄位，不存題目內容 (節省流量與空間)
     const progressData = cards.map(c => ({
-        id: c.id,
+        id: c.progressId || progressIdFor(currentQuestionBank, c.id),
         reps: c.reps,
         interval: c.interval,
         ef: c.ef,
@@ -286,6 +309,7 @@ function loadNextCard() {
     }
 
     currentCard = sessionQueue[0];
+    window.currentCard = currentCard;
     document.getElementById('remaining-count').innerText = sessionQueue.length;
 
     const cardContent = document.getElementById('card-content');
@@ -430,6 +454,7 @@ function renderQuestionList() {
     userControlDiv.style.borderRadius = '10px';
     userControlDiv.innerHTML = `
         <p style="margin:0 0 10px 0; color:#444;">目前使用者: <b>${currentProfileId || '未知'}</b></p>
+        <p style="margin:0 0 10px 0; color:#666; font-size:0.9rem;">目前題庫: <b>${currentQuestionBank}</b></p>
         <button class="btn btn-neutral" style="font-size:0.9rem; padding: 5px 15px;">登出 / 切換使用者</button>
     `;
     userControlDiv.querySelector('button').onclick = logout;
