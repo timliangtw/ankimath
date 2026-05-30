@@ -67,8 +67,10 @@ const FaceShape = ({ item, rotation = 0, small = false }) => {
                         </div>
                     </div>
                 ` : html`
-                    <div className=${small ? 'text-lg' : 'text-2xl'}>${face.eyes}</div>
-                    <div className=${small ? 'text-3xl leading-none' : 'text-5xl leading-none'}>${face.mouth}</div>
+                    <div className="flex flex-col items-center justify-center">
+                        <div className=${small ? 'text-lg' : 'text-2xl'}>${face.eyes}</div>
+                        <div className=${small ? 'text-3xl leading-none' : 'text-5xl leading-none'}>${face.mouth}</div>
+                    </div>
                 `}
             </div>
         </div>
