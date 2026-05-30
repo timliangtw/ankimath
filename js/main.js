@@ -133,8 +133,7 @@ async function initApp() {
             } else {
                 // 顯示選擇與建立介面 (簡單用 prompt/confirm 或是自製 UI)
                 // 這裡為了簡化，如果找不到上次的，就列出名字讓使用者輸入，或是輸入新名字
-                const names = profiles.map(p => p.name).join(', ');
-                const inputName = prompt(`請輸入你的名字以登入:\n(已知使用者: ${names})\n\n或輸入新名字建立新帳號:`);
+                const inputName = prompt("請輸入你的名字以登入，或輸入新名字建立新帳號:");
 
                 if (!inputName) {
                     alert("請重新整理並輸入名字");
