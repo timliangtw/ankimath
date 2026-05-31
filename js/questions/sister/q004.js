@@ -6,7 +6,7 @@ function shuffle(items) {
 }
 
 const TOYS = [
-    { id: 'ball', name: '彩色球', icon: '🏐', color: 'bg-pink-100 border-pink-300 text-pink-700' },
+    { id: 'ball', name: '彩球', icon: '🏐', color: 'bg-pink-100 border-pink-300 text-pink-700' },
     { id: 'bear', name: '小熊', icon: '🧸', color: 'bg-amber-100 border-amber-300 text-amber-700' },
     { id: 'frog', name: '青蛙', icon: '🐸', color: 'bg-green-100 border-green-300 text-green-700' },
     { id: 'doll', name: '娃娃', icon: '🪆', color: 'bg-purple-100 border-purple-300 text-purple-700' },
@@ -14,17 +14,77 @@ const TOYS = [
 ];
 
 const CHILDREN = [
-    { id: 'blueBoy', name: '藍衣男孩', icon: '👦', toy: 'ball' },
-    { id: 'blueDressGirl', name: '藍洋裝女孩', icon: '👧', toy: 'bear' },
-    { id: 'whiteBoy', name: '白衣男孩', icon: '🧒', toy: 'frog' },
-    { id: 'redDressGirl', name: '紅洋裝女孩', icon: '👧🏻', toy: 'doll' },
-    { id: 'yellowBoy', name: '黃衣男孩', icon: '👦🏼', toy: 'plane' },
+    { id: 'blueBoy', name: '藍衣男孩', toy: 'ball', shirt: 'blue', hair: 'red', pants: 'red' },
+    { id: 'blueDressGirl', name: '藍裙女孩', toy: 'bear', shirt: 'blueDress', hair: 'brown', pants: 'red' },
+    { id: 'whiteBoy', name: '白衣男孩', toy: 'frog', shirt: 'striped', hair: 'brown', pants: 'blue' },
+    { id: 'redDressGirl', name: '紅裙女孩', toy: 'doll', shirt: 'redDress', hair: 'purple', pants: 'green' },
+    { id: 'yellowBoy', name: '黃衣男孩', toy: 'plane', shirt: 'yellow', hair: 'brownCurly', pants: 'green' },
 ];
 
 function generateProblem() {
     const child = CHILDREN[Math.floor(Math.random() * CHILDREN.length)];
     return { child, options: shuffle(TOYS) };
 }
+
+const KidAvatar = ({ child, toyId = null, question = false, small = false }) => {
+    const hairColor = {
+        red: '#d45135',
+        brown: '#6b3f2a',
+        purple: '#6c4ca8',
+        brownCurly: '#6b3f2a',
+    }[child.hair];
+    const shirt = {
+        blue: '#285b9f',
+        blueDress: '#2f8fc7',
+        striped: 'repeating-linear-gradient(0deg, #fff 0 8px, #f28b36 8px 12px)',
+        redDress: '#d84a50',
+        yellow: '#f5d92f',
+    }[child.shirt];
+    const pants = {
+        red: '#bf513d',
+        blue: '#3182ce',
+        green: '#2f8a67',
+    }[child.pants];
+    const toy = toyId ? TOYS.find(item => item.id === toyId) : null;
+    const scale = small ? 'scale-90' : 'scale-100';
+    const frame = small ? 'h-28 w-24' : 'h-36 w-28';
+
+    return html`
+        <div className=${`relative mx-auto ${frame} ${scale}`} aria-label=${child.name}>
+            <div
+                className="absolute left-1/2 top-1 h-12 w-14 -translate-x-1/2 rounded-full border-2 border-amber-700"
+                style=${{ background: '#ffd7ad' }}
+            >
+                ${child.hair === 'brownCurly' ? html`
+                    <div className="absolute -top-2 left-0 flex w-14 justify-center gap-0.5">
+                        ${[0, 1, 2, 3, 4].map(index => html`
+                            <span key=${index} className="h-3 w-3 rounded-full" style=${{ background: hairColor }}></span>
+                        `)}
+                    </div>
+                ` : html`
+                    <div className="absolute -left-1 -top-1 h-5 w-16 rounded-t-full" style=${{ background: hairColor }}></div>
+                `}
+                ${child.hair === 'purple' && html`
+                    <div className="absolute -left-4 top-2 h-7 w-7 rounded-full" style=${{ background: hairColor }}></div>
+                `}
+                <div className="absolute left-3 top-6 h-1.5 w-1.5 rounded-full bg-slate-800"></div>
+                <div className="absolute right-3 top-6 h-1.5 w-1.5 rounded-full bg-slate-800"></div>
+                <div className="absolute left-1/2 top-9 h-2 w-6 -translate-x-1/2 rounded-b-full border-b-2 border-red-500"></div>
+            </div>
+            <div
+                className=${`absolute left-1/2 top-14 -translate-x-1/2 border-2 border-slate-600 ${child.shirt.includes('Dress') ? 'h-14 w-12 rounded-b-3xl' : 'h-12 w-12 rounded-xl'}`}
+                style=${{ background: shirt }}
+            ></div>
+            <div className="absolute left-4 top-[70px] h-8 w-2 -rotate-12 rounded-full bg-amber-700"></div>
+            <div className="absolute right-4 top-[70px] h-8 w-2 rotate-12 rounded-full bg-amber-700"></div>
+            <div className="absolute left-10 top-[102px] h-7 w-2 rounded-full" style=${{ background: pants }}></div>
+            <div className="absolute right-10 top-[102px] h-7 w-2 rounded-full" style=${{ background: pants }}></div>
+            <div className="absolute right-0 top-[72px] flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-white bg-white text-4xl shadow-md">
+                ${question ? html`<span className="text-5xl font-black text-violet-300">?</span>` : toy.icon}
+            </div>
+        </div>
+    `;
+};
 
 const ToyMemoryGame = () => {
     const [problem, setProblem] = useState(null);
@@ -58,26 +118,19 @@ const ToyMemoryGame = () => {
                     玩玩具
                 </div>
                 <h1 className="text-xl md:text-2xl font-bold text-slate-800 leading-relaxed">
-                    先看大家拿什麼，再幫小朋友找回玩具
+                    先看圖，再找玩具
                 </h1>
             </div>
 
             ${mode === 'look' && html`
-                <div className="bg-violet-50 border-2 border-violet-100 rounded-2xl p-5 mb-5">
-                    <div className="text-center font-black text-slate-700 mb-4">觀察時間</div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="bg-violet-50 border-2 border-violet-100 rounded-2xl p-4 mb-5">
+                    <div className="text-center font-black text-slate-700 mb-3">記一記</div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                         ${CHILDREN.map(child => {
                             const toy = TOYS.find(item => item.id === child.toy);
                             return html`
-                                <div key=${child.id} className="bg-white rounded-xl border border-violet-100 p-4 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-3xl">${child.icon}</span>
-                                        <span className="font-black text-slate-700">${child.name}</span>
-                                    </div>
-                                    <div className="text-center">
-                                        <div className="text-4xl">${toy.icon}</div>
-                                        <div className="text-xs font-bold text-slate-500">${toy.name}</div>
-                                    </div>
+                                <div key=${child.id} className="bg-white rounded-2xl border border-violet-100 p-2 text-center shadow-sm">
+                                    <${KidAvatar} child=${child} toyId=${toy.id} small=${true} />
                                 </div>
                             `;
                         })}
@@ -94,10 +147,8 @@ const ToyMemoryGame = () => {
             ${mode === 'answer' && html`
                 <div>
                     <div className="bg-violet-50 border-2 border-violet-100 rounded-2xl p-5 mb-5 text-center">
-                        <div className="text-5xl mb-2">${problem.child.icon}</div>
-                        <div className="text-xl font-black text-slate-800">
-                            ${problem.child.name} 剛剛拿的是什麼玩具？
-                        </div>
+                        <${KidAvatar} child=${problem.child} question=${true} />
+                        <div className="text-xl font-black text-slate-800">找玩具</div>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-5">
@@ -120,8 +171,8 @@ const ToyMemoryGame = () => {
                                         ${!isSelected && !isDisabled ? `${toy.color} hover:brightness-105 active:scale-95 cursor-pointer` : ''}
                                     `}
                                 >
-                                    <div className="text-4xl mb-2">${toy.icon}</div>
-                                    <div className="font-black">${toy.name}</div>
+                                    <div className="text-5xl mb-1">${toy.icon}</div>
+                                    <div className="text-sm font-black">${toy.name}</div>
                                 </button>
                             `;
                         })}
@@ -131,7 +182,7 @@ const ToyMemoryGame = () => {
 
             ${gameState === 'wrong' && html`
                 <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center mb-4">
-                    <div className="text-red-500 font-bold text-lg">再想想看</div>
+                    <div className="text-red-500 font-bold text-lg">再看一次</div>
                     <button
                         onClick=${() => {
                             setMode('look');
@@ -149,7 +200,7 @@ const ToyMemoryGame = () => {
                 <div className="bg-green-50 border border-green-200 rounded-2xl p-5 text-center mb-4">
                     <div className="text-green-600 font-bold text-xl mb-2">答對了！</div>
                     <p className="text-slate-700 font-bold">
-                        ${problem.child.name} 拿的是 ${answerToy.icon} ${answerToy.name}。
+                        ${answerToy.icon} ${answerToy.name}
                     </p>
                     <button
                         onClick=${newProblem}
@@ -167,7 +218,7 @@ export default {
     id: 'q004',
     type: 'custom',
     title: '玩玩具：記得誰拿什麼',
-    q: '觀察上一頁玩具，再把玩具配到小朋友手中。',
+    q: '看圖記住小朋友手上的玩具，再選出正確玩具。',
     render: (container) => {
         const root = ReactDOM.createRoot(container);
         root.render(html`<${ToyMemoryGame} />`);
