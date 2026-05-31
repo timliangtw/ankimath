@@ -14,16 +14,21 @@ const SHAPES = [
 
 function generateProblem() {
     const base = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-    const badIndex = Math.floor(Math.random() * 4);
-    const options = shuffle([0, 90, 180, 270].map((rotation, index) => ({
-        id: `${rotation}-${index}`,
-        rotation,
-        isBad: index === badIndex,
-    })));
-    return { base, options };
+    const step = Math.random() < 0.5 ? 90 : -90;
+    const start = [0, 90, 180, 270][Math.floor(Math.random() * 4)];
+    const sequence = [0, 1, 2, 3].map(index => ((start + step * index) % 360 + 360) % 360);
+    const options = shuffle([0, 90, 180, 270]);
+    return {
+        base,
+        sequence,
+        shown: sequence.slice(0, 3),
+        answerRotation: sequence[3],
+        options,
+        directionText: step > 0 ? '往右翻' : '往左翻',
+    };
 }
 
-const FaceShape = ({ item, rotation = 0, faceOffset = 0, small = false }) => {
+const FaceShape = ({ item, rotation = 0, small = false }) => {
     const size = small ? 'w-24 h-24' : 'w-32 h-32 md:w-40 md:h-40';
     const shapeClass = {
         circle: 'rounded-full',
@@ -63,18 +68,14 @@ const FaceShape = ({ item, rotation = 0, faceOffset = 0, small = false }) => {
                             style=${{
                                 left: small ? '-30px' : '-42px',
                                 top: small ? '34px' : '50px',
-                                width: small ? '60px' : '84px',
-                                transform: `rotate(${faceOffset}deg)`
+                                width: small ? '60px' : '84px'
                             }}>
                             <div className=${small ? 'text-lg' : 'text-2xl'}>${face.eyes}</div>
                             <div className=${small ? 'text-2xl leading-none' : 'text-4xl leading-none'}>${face.mouth}</div>
                         </div>
                     </div>
                 ` : html`
-                    <div
-                        className="flex flex-col items-center justify-center"
-                        style=${{ transform: `rotate(${faceOffset}deg)` }}
-                    >
+                    <div className="flex flex-col items-center justify-center">
                         <div className=${small ? 'text-lg' : 'text-2xl'}>${face.eyes}</div>
                         <div className=${small ? 'text-3xl leading-none' : 'text-5xl leading-none'}>${face.mouth}</div>
                     </div>
@@ -97,10 +98,10 @@ const FlipShapeGame = () => {
 
     useEffect(() => { newProblem(); }, []);
 
-    const handleSelect = (option) => {
+    const handleSelect = (rotation) => {
         if (gameState === 'correct') return;
-        setSelected(option.id);
-        setGameState(option.isBad ? 'correct' : 'wrong');
+        setSelected(rotation);
+        setGameState(rotation === problem.answerRotation ? 'correct' : 'wrong');
     };
 
     if (!problem) return html`<div className="text-center p-8 text-slate-400">準備圖形中...</div>`;
@@ -120,31 +121,39 @@ const FlipShapeGame = () => {
                     圖形翻跟頭
                 </div>
                 <h1 className="text-xl md:text-2xl font-bold text-slate-800 leading-relaxed">
-                    哪一個翻跟頭後怪怪的？
+                    下一張會翻成哪個方向？
                 </h1>
                 <p className="text-slate-500 font-bold mt-2">
-                    找出眼睛和嘴巴沒有跟著一起轉的圖形
+                    看前三張的規律，再選第 4 張
                 </p>
             </div>
 
             <div className="bg-pink-50 border-2 border-pink-100 rounded-2xl p-5 mb-5 text-center">
-                <${FaceShape} item=${problem.base} rotation=${0} />
-                <div className="mt-3 text-slate-500 font-bold">${problem.base.label}</div>
+                <div className="grid grid-cols-4 gap-2 items-center">
+                    ${problem.shown.map((rotation, index) => html`
+                        <div key=${`shown-${index}`} className="bg-white border border-pink-100 rounded-xl p-2">
+                            <div className="text-xs font-black text-slate-400 mb-1">第 ${index + 1} 張</div>
+                            <${FaceShape} item=${problem.base} rotation=${rotation} small=${true} />
+                        </div>
+                    `)}
+                    <div className="bg-white border-2 border-dashed border-pink-300 rounded-xl p-2 flex flex-col items-center justify-center h-full min-h-32">
+                        <div className="text-xs font-black text-pink-400 mb-2">第 4 張</div>
+                        <div className="text-4xl font-black text-pink-300">?</div>
+                    </div>
+                </div>
+                <div className="mt-3 text-slate-500 font-bold">${problem.base.label}，規律是${problem.directionText}</div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 mb-5">
-                ${problem.options.map((option, index) => {
-                    const isSelected = selected === option.id;
+                ${problem.options.map((rotation, index) => {
+                    const isSelected = selected === rotation;
                     const isCorrect = gameState === 'correct' && isSelected;
                     const isWrong = gameState === 'wrong' && isSelected;
                     const isDisabled = gameState === 'correct' && !isSelected;
-                    const faceOffset = option.isBad
-                        ? (option.rotation === 0 ? 90 : -option.rotation)
-                        : 0;
                     return html`
                         <button
-                            key=${option.id}
-                            onClick=${() => handleSelect(option)}
+                            key=${rotation}
+                            onClick=${() => handleSelect(rotation)}
                             disabled=${isDisabled}
                             className=${`
                                 rounded-2xl p-3 border-b-4 transition-all shadow-sm
@@ -155,12 +164,7 @@ const FlipShapeGame = () => {
                             `}
                         >
                             <div className="text-sm font-black text-slate-400 mb-1">選項 ${index + 1}</div>
-                            <${FaceShape}
-                                item=${problem.base}
-                                rotation=${option.rotation}
-                                faceOffset=${faceOffset}
-                                small=${true}
-                            />
+                            <${FaceShape} item=${problem.base} rotation=${rotation} small=${true} />
                         </button>
                     `;
                 })}
@@ -168,20 +172,22 @@ const FlipShapeGame = () => {
 
             ${gameState === 'wrong' && html`
                 <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center mb-4">
-                    <div className="text-red-500 font-bold text-lg">再看仔細一點</div>
-                    <p className="text-red-600 text-sm mt-1">這個的眼睛和嘴巴有跟著圖形一起轉，不是怪怪的那一個。</p>
+                    <div className="text-red-500 font-bold text-lg">再看一次規律</div>
+                    <p className="text-red-600 text-sm mt-1">每一張都往同一邊翻，下一張也要照著翻。</p>
                 </div>
             `}
 
             ${gameState === 'correct' && html`
                 <div className="bg-green-50 border border-green-200 rounded-2xl p-5 text-center mb-4">
                     <div className="text-green-600 font-bold text-xl mb-2">答對了！</div>
-                    <p className="text-slate-700 font-bold">這一個的眼睛和嘴巴沒有跟著圖形一起轉，所以怪怪的。</p>
+                    <p className="text-slate-700 font-bold">
+                        前三張都${problem.directionText}，所以第 4 張就是這個方向。
+                    </p>
                     <button
                         onClick=${newProblem}
                         className="mt-4 px-6 py-2 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-xl transition-colors shadow-sm"
                     >
-                        再試一題（換怪怪的圖）
+                        再試一題（換規律）
                     </button>
                 </div>
             `}
@@ -192,8 +198,8 @@ const FlipShapeGame = () => {
 export default {
     id: 'q002',
     type: 'custom',
-    title: '圖形翻跟頭：找出怪怪的圖',
-    q: '觀察圖形翻轉後，找出眼睛和嘴巴沒有跟著一起轉的圖。',
+    title: '圖形翻跟頭：猜下一張方向',
+    q: '觀察前三張圖形翻轉的規律，選出下一張的方向。',
     render: (container) => {
         const root = ReactDOM.createRoot(container);
         root.render(html`<${FlipShapeGame} />`);
