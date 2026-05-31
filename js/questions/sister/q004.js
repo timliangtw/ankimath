@@ -14,16 +14,26 @@ const TOYS = [
 ];
 
 const CHILDREN = [
-    { id: 'blueBoy', name: '藍衣男孩', toy: 'ball', shirt: 'blue', hair: 'red', pants: 'red' },
-    { id: 'blueDressGirl', name: '藍裙女孩', toy: 'bear', shirt: 'blueDress', hair: 'brown', pants: 'red' },
-    { id: 'whiteBoy', name: '白衣男孩', toy: 'frog', shirt: 'striped', hair: 'brown', pants: 'blue' },
-    { id: 'redDressGirl', name: '紅裙女孩', toy: 'doll', shirt: 'redDress', hair: 'purple', pants: 'green' },
-    { id: 'yellowBoy', name: '黃衣男孩', toy: 'plane', shirt: 'yellow', hair: 'brownCurly', pants: 'green' },
+    { id: 'blueBoy', name: '藍衣男孩', shirt: 'blue', hair: 'red', pants: 'red' },
+    { id: 'blueDressGirl', name: '藍裙女孩', shirt: 'blueDress', hair: 'brown', pants: 'red' },
+    { id: 'whiteBoy', name: '白衣男孩', shirt: 'striped', hair: 'brown', pants: 'blue' },
+    { id: 'redDressGirl', name: '紅裙女孩', shirt: 'redDress', hair: 'purple', pants: 'green' },
+    { id: 'yellowBoy', name: '黃衣男孩', shirt: 'yellow', hair: 'brownCurly', pants: 'green' },
 ];
 
 function generateProblem() {
-    const child = CHILDREN[Math.floor(Math.random() * CHILDREN.length)];
-    return { child, options: shuffle(TOYS) };
+    const toys = shuffle(TOYS);
+    const pairs = CHILDREN.map((child, index) => ({
+        ...child,
+        toy: toys[index].id,
+    }));
+    const child = pairs[Math.floor(Math.random() * pairs.length)];
+    return {
+        pairs,
+        child,
+        answerToyId: child.toy,
+        options: shuffle(TOYS),
+    };
 }
 
 const KidAvatar = ({ child, toyId = null, question = false, small = false }) => {
@@ -104,12 +114,12 @@ const ToyMemoryGame = () => {
     const handleSelect = (toyId) => {
         if (gameState === 'correct') return;
         setSelected(toyId);
-        setGameState(toyId === problem.child.toy ? 'correct' : 'wrong');
+        setGameState(toyId === problem.answerToyId ? 'correct' : 'wrong');
     };
 
     if (!problem) return html`<div className="text-center p-8 text-slate-400">準備玩具中...</div>`;
 
-    const answerToy = TOYS.find(toy => toy.id === problem.child.toy);
+    const answerToy = TOYS.find(toy => toy.id === problem.answerToyId);
 
     return html`
         <div className="w-full font-sans text-left mx-auto max-w-2xl">
@@ -126,7 +136,7 @@ const ToyMemoryGame = () => {
                 <div className="bg-violet-50 border-2 border-violet-100 rounded-2xl p-4 mb-5">
                     <div className="text-center font-black text-slate-700 mb-3">記一記</div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        ${CHILDREN.map(child => {
+                        ${problem.pairs.map(child => {
                             const toy = TOYS.find(item => item.id === child.toy);
                             return html`
                                 <div key=${child.id} className="bg-white rounded-2xl border border-violet-100 p-2 text-center shadow-sm">
