@@ -14,10 +14,8 @@ const SHAPES = [
 
 function generateProblem() {
     const base = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-    const answerRotation = [90, 180, 270][Math.floor(Math.random() * 3)];
-    const wrongRotations = [0, 90, 180, 270].filter(rotation => rotation !== answerRotation);
-    const options = shuffle([answerRotation, ...shuffle(wrongRotations).slice(0, 3)]);
-    return { base, answerRotation, options };
+    const options = shuffle([0, 90, 180, 270]);
+    return { base, options };
 }
 
 const FaceShape = ({ item, rotation = 0, small = false }) => {
@@ -93,7 +91,7 @@ const FlipShapeGame = () => {
     const handleSelect = (rotation) => {
         if (gameState === 'correct') return;
         setSelected(rotation);
-        setGameState(rotation === problem.answerRotation ? 'correct' : 'wrong');
+        setGameState(rotation === 0 ? 'wrong' : 'correct');
     };
 
     if (!problem) return html`<div className="text-center p-8 text-slate-400">準備圖形中...</div>`;
@@ -151,14 +149,14 @@ const FlipShapeGame = () => {
             ${gameState === 'wrong' && html`
                 <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center mb-4">
                     <div className="text-red-500 font-bold text-lg">再轉轉看</div>
-                    <p className="text-red-600 text-sm mt-1">眼睛和嘴巴的位置也要一起跟著轉喔。</p>
+                    <p className="text-red-600 text-sm mt-1">這個圖形還沒有翻跟頭，方向跟原本一樣喔。</p>
                 </div>
             `}
 
             ${gameState === 'correct' && html`
                 <div className="bg-green-50 border border-green-200 rounded-2xl p-5 text-center mb-4">
                     <div className="text-green-600 font-bold text-xl mb-2">答對了！</div>
-                    <p className="text-slate-700 font-bold">圖形轉了，臉上的眼睛和嘴巴也會一起轉。</p>
+                    <p className="text-slate-700 font-bold">圖形有翻跟頭，臉上的眼睛和嘴巴也一起轉了。</p>
                     <button
                         onClick=${newProblem}
                         className="mt-4 px-6 py-2 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-xl transition-colors shadow-sm"
