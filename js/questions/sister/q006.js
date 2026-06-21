@@ -1,15 +1,35 @@
 const { useState, useRef } = React;
 const html = htm.bind(React.createElement);
 
-const PATH = [
-    { x: 0, y: 2 },
-    { x: 1, y: 1 },
-    { x: 2, y: 3 },
-    { x: 3, y: 0 },
-    { x: 4, y: 2 },
-    { x: 5, y: 0 },
-    { x: 7, y: 3 },
-    { x: 8, y: 0 },
+const PATH_TEMPLATES = [
+    {
+        name: '山谷線',
+        points: [
+            { x: 0, y: 2 }, { x: 1, y: 1 }, { x: 2, y: 3 }, { x: 3, y: 0 },
+            { x: 4, y: 2 }, { x: 5, y: 0 }, { x: 7, y: 3 }, { x: 8, y: 0 },
+        ],
+    },
+    {
+        name: '鋸齒線',
+        points: [
+            { x: 0, y: 1 }, { x: 1, y: 3 }, { x: 2, y: 0 }, { x: 3, y: 2 },
+            { x: 4, y: 1 }, { x: 5, y: 3 }, { x: 6, y: 0 }, { x: 8, y: 2 },
+        ],
+    },
+    {
+        name: '高低線',
+        points: [
+            { x: 0, y: 3 }, { x: 1, y: 0 }, { x: 2, y: 2 }, { x: 3, y: 1 },
+            { x: 4, y: 3 }, { x: 6, y: 0 }, { x: 7, y: 2 }, { x: 8, y: 1 },
+        ],
+    },
+    {
+        name: '波浪線',
+        points: [
+            { x: 0, y: 2 }, { x: 1, y: 0 }, { x: 2, y: 1 }, { x: 3, y: 3 },
+            { x: 4, y: 1 }, { x: 5, y: 2 }, { x: 6, y: 0 }, { x: 8, y: 3 },
+        ],
+    },
 ];
 
 const VIEW = {
@@ -28,16 +48,27 @@ function toSvgPoint(point) {
     };
 }
 
-const TARGET_POINTS = PATH.map(toSvgPoint);
+function generateProblem() {
+    const template = PATH_TEMPLATES[Math.floor(Math.random() * PATH_TEMPLATES.length)];
+    const flipY = Math.random() < 0.5;
+    const points = template.points.map(point => ({
+        x: point.x,
+        y: flipY ? 3 - point.y : point.y,
+    }));
+    return {
+        name: flipY ? `${template.name}（上下相反）` : template.name,
+        targetPoints: points.map(toSvgPoint),
+    };
+}
 
 function pointDistance(a, b) {
     return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-function interpolateTargetY(x) {
-    for (let i = 0; i < TARGET_POINTS.length - 1; i++) {
-        const a = TARGET_POINTS[i];
-        const b = TARGET_POINTS[i + 1];
+function interpolateTargetY(targetPoints, x) {
+    for (let i = 0; i < targetPoints.length - 1; i++) {
+        const a = targetPoints[i];
+        const b = targetPoints[i + 1];
         const minX = Math.min(a.x, b.x);
         const maxX = Math.max(a.x, b.x);
         if (x >= minX && x <= maxX) {
@@ -59,13 +90,13 @@ function nearestDrawnY(points, x) {
     return best && best.distance <= 18 ? best.y : null;
 }
 
-function evaluateDrawing(points) {
+function evaluateDrawing(points, targetPoints) {
     if (points.length < 18) {
         return { ok: false, message: '線太短了，請從左邊開始把整條折線畫完。' };
     }
 
-    const first = TARGET_POINTS[0];
-    const last = TARGET_POINTS[TARGET_POINTS.length - 1];
+    const first = targetPoints[0];
+    const last = targetPoints[targetPoints.length - 1];
     const minX = Math.min(...points.map(point => point.x));
     const maxX = Math.max(...points.map(point => point.x));
 
@@ -79,7 +110,7 @@ function evaluateDrawing(points) {
         return { ok: false, message: '要從左邊一路畫到右邊，不能只畫中間一段。' };
     }
 
-    const missedTurn = TARGET_POINTS.some(target =>
+    const missedTurn = targetPoints.some(target =>
         !points.some(point => pointDistance(point, target) <= 42)
     );
     if (missedTurn) {
@@ -88,7 +119,7 @@ function evaluateDrawing(points) {
 
     const sampleXs = Array.from({ length: 17 }).map((_, index) => first.x + index * ((last.x - first.x) / 16));
     const errors = sampleXs.map(x => {
-        const targetY = interpolateTargetY(x);
+        const targetY = interpolateTargetY(targetPoints, x);
         const drawnY = nearestDrawnY(points, x);
         return drawnY === null || targetY === null ? 999 : Math.abs(drawnY - targetY);
     });
@@ -132,12 +163,12 @@ const Grid = ({ children, muted = false }) => html`
     </svg>
 `;
 
-const ReferencePath = () => {
-    const polyline = TARGET_POINTS.map(point => `${point.x},${point.y}`).join(' ');
+const ReferencePath = ({ targetPoints }) => {
+    const polyline = targetPoints.map(point => `${point.x},${point.y}`).join(' ');
     return html`
         <${Grid}>
             <polyline points=${polyline} fill="none" stroke="#d94682" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
-            ${TARGET_POINTS.map((point, index) => html`
+            ${targetPoints.map((point, index) => html`
                 <circle key=${`ref-${index}`} cx=${point.x} cy=${point.y} r="6" fill="#d94682" />
             `)}
             <text x="20" y="160" fontSize="13" fill="#64748b" fontWeight="700">範例</text>
@@ -193,6 +224,7 @@ const DrawingBoard = ({ points, boardRef, onStart, onMove, onEnd, gameState }) =
 };
 
 const TracePathGame = () => {
+    const [problem, setProblem] = useState(generateProblem);
     const [points, setPoints] = useState([]);
     const [gameState, setGameState] = useState('playing');
     const [message, setMessage] = useState('');
@@ -296,7 +328,7 @@ const TracePathGame = () => {
     };
 
     const checkDrawing = () => {
-        const result = evaluateDrawing(points);
+        const result = evaluateDrawing(points, problem.targetPoints);
         setMessage(result.message);
         if (result.ok) {
             setGameState('correct');
@@ -304,6 +336,11 @@ const TracePathGame = () => {
             if (window.onIncorrectAnswer) window.onIncorrectAnswer();
             setGameState('wrong');
         }
+    };
+
+    const nextProblem = () => {
+        setProblem(generateProblem());
+        clearDrawing();
     };
 
     return html`
@@ -315,12 +352,12 @@ const TracePathGame = () => {
                 <h1 className="text-xl md:text-2xl font-bold text-slate-800 leading-relaxed">
                     看上面的範例，在下面徒手畫一條一樣的折線
                 </h1>
-                <p className="text-slate-500 font-bold mt-2">${practiceLabel}</p>
+                <p className="text-slate-500 font-bold mt-2">${practiceLabel}：${problem.name}</p>
             </div>
 
             <div className="bg-lime-50 border-2 border-lime-100 rounded-2xl p-4 mb-4">
                 <div className="text-center font-black text-lime-700 mb-2">先看範例</div>
-                <${ReferencePath} />
+                <${ReferencePath} targetPoints=${problem.targetPoints} />
             </div>
 
             <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-4 mb-5">
@@ -369,10 +406,10 @@ const TracePathGame = () => {
                         ${message}
                     </p>
                     <button
-                        onClick=${clearDrawing}
+                        onClick=${nextProblem}
                         className="mt-4 px-6 py-2 bg-lime-600 hover:bg-lime-700 text-white font-bold rounded-xl transition-colors shadow-sm"
                     >
-                        再描一次
+                        再描一題（換範例）
                     </button>
                 </div>
             `}
