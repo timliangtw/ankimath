@@ -12,9 +12,11 @@ const html = htm.bind(React.createElement);
  */
 
 const KID_COLORS = ['#3b82f6', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6'];
+const SCENES = ['公園', '操場', '草地上', '沙灘旁'];
 
 function generateProblem() {
     const sunOnLeft = Math.random() < 0.5;
+    const scene = SCENES[Math.floor(Math.random() * SCENES.length)];
     const kidCount = 4 + Math.floor(Math.random() * 2);          // 4~5 個小朋友
     const wrongCount = 1 + Math.floor(Math.random() * 2);        // 其中 1~2 個影子是錯的
 
@@ -36,7 +38,7 @@ function generateProblem() {
         isWrong: wrongIdx.has(i)
     }));
 
-    return { sunOnLeft, kids, wrongTotal: wrongCount };
+    return { sunOnLeft, kids, wrongTotal: wrongCount, scene, kidCount };
 }
 
 const ShadowGame = () => {
@@ -72,7 +74,7 @@ const ShadowGame = () => {
 
     if (!problem) return html`<div className="text-center p-8 text-slate-400">曬太陽中...</div>`;
 
-    const { sunOnLeft, kids, wrongTotal } = problem;
+    const { sunOnLeft, kids, wrongTotal, scene, kidCount } = problem;
     const done = gameState === 'correct';
 
     return html`
@@ -82,7 +84,8 @@ const ShadowGame = () => {
                     我們的影子
                 </div>
                 <h1 className="text-xl md:text-2xl font-bold text-slate-800 leading-relaxed">
-                    看看圖中哪些影子是<span className="text-red-500">錯的</span>，把它們點出來。
+                    ${kidCount} 個小朋友在${scene}玩，
+                    看看哪些影子是<span className="text-red-500">錯的</span>，把它們點出來。
                 </h1>
                 <p className="mt-1 text-sm font-black text-slate-500">
                     還要找出 ${wrongTotal - found.length} 個
