@@ -234,8 +234,16 @@ async function switchProfile(profileId) {
     if (!profileId || profileId === currentProfileId || isSwitchingProfile) return;
 
     const select = document.getElementById('profile-select');
+    const loadingEl = document.getElementById('startup-loading');
+    const loadingMsg = document.getElementById('loading-msg');
+
     isSwitchingProfile = true;
     if (select) select.disabled = true;
+    // 題庫載入完成前先擋住畫面，避免看到上一位使用者的題目
+    if (loadingEl) {
+        if (loadingMsg) loadingMsg.innerText = "切換使用者，載入題目中...";
+        loadingEl.style.display = 'flex';
+    }
 
     try {
         await loginProfile(profileId);
@@ -245,6 +253,7 @@ async function switchProfile(profileId) {
         alert("切換使用者失敗，請再試一次。");
     } finally {
         isSwitchingProfile = false;
+        if (loadingEl) loadingEl.style.display = 'none';
         renderProfileSelector();
     }
 }
