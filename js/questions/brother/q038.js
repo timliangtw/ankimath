@@ -219,7 +219,7 @@ const DrinkOrderProblem = () => {
 
             ${questionBlock(
                 0, '第 1 小題',
-                html`兩班<span className="text-amber-600">不加配料</span>的鮮奶一共有幾杯？`,
+                html`<span>兩班<span className="text-amber-600">不加配料</span>的鮮奶一共有幾杯？</span>`,
                 options1,
                 '把甲班和乙班「不加配料」那一格的數量加起來。',
                 html`<div className="flex justify-between"><span>甲班 ${classA.plain} 杯 + 乙班 ${classB.plain} 杯：</span><span className="font-black text-green-700">${plainTotal} 杯</span></div>`
@@ -227,7 +227,7 @@ const DrinkOrderProblem = () => {
 
             ${questionBlock(
                 1, '第 2 小題',
-                html`每一杯有加布丁的飲品都要加 1 盒布丁，兩班一共會用掉幾盒布丁？`,
+                html`<span>每一杯有加布丁的飲品都要加 1 盒布丁，兩班一共會用掉幾盒布丁？</span>`,
                 options2,
                 '「兩種都加」的飲品裡面也有布丁喔。',
                 html`
@@ -241,8 +241,8 @@ const DrinkOrderProblem = () => {
 
             ${questionBlock(
                 2, '第 3 小題',
-                html`飲品要裝在袋子裡，1 個袋子最多只能裝 <span className="text-blue-600">${perBag} 杯</span>，
-                     兩班訂購的飲品<span className="underline">最少</span>共需要幾個袋子才能全部裝完？`,
+                html`<span>飲品要裝在袋子裡，1 個袋子最多只能裝 <span className="text-blue-600">${perBag} 杯</span>，
+                     兩班訂購的飲品<span className="underline">最少</span>共需要幾個袋子才能全部裝完？</span>`,
                 options3,
                 '剩下裝不滿一袋的幾杯，也還是要多用一個袋子。',
                 html`
