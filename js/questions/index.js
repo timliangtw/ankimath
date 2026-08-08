@@ -3,49 +3,77 @@
 // 限制：檔名必須是 q001, q002... 連續編號
 
 const VALID_BANKS = new Set(['brother', 'sister']);
+const MAX_CONSECUTIVE_FAILURES = 3; // 允許連續找不到 3 個檔案才停止
+const RETRY_DELAY_MS = 150;
 
 function normalizeBank(bank) {
     return VALID_BANKS.has(bank) ? bank : 'brother';
 }
 
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+let retryToken = 0;
+
+// 載入失敗有兩種可能：檔案不存在（正常，代表題庫結束），或只是網路暫時出問題。
+// 兩者從 import 看起來一樣，所以一律重試一次，避免網路抖動讓某一題被靜默跳過。
+// 注意：瀏覽器會把載入失敗的網址記在 module map 裡，直接重試同一個網址不會重新下載，
+// 所以重試時一定要加上不重複的 query string。
+async function importWithRetry(filename) {
+    try {
+        return await import(filename);
+    } catch (firstError) {
+        await delay(RETRY_DELAY_MS);
+        try {
+            return await import(`${filename}?retry=${Date.now()}-${++retryToken}`);
+        } catch (secondError) {
+            return null;
+        }
+    }
+}
+
 async function loadQuestions(bank = 'brother') {
     const questionBank = normalizeBank(bank);
     const questions = [];
+    const failedIndexes = [];
     let index = 1;
     const maxLimit = 999; // 避免無窮迴圈的保險機制
 
     let consecutiveFailures = 0;
-    const maxConsecutiveFailures = 3; // 允許連續找不到 3 個檔案才停止
 
     while (index <= maxLimit) {
         // 格式化編號：將 1 轉成 "001"
         const idStr = index.toString().padStart(3, '0');
         const filename = `./${questionBank}/q${idStr}.js`;
 
-        try {
-            // 動態引入
-            // 注意：這裡是瀏覽器原生的 dynamic import
-            // 如果檔案不存在，瀏覽器會報錯 (404)，我們會 catch 住並認為列表結束
-            const module = await import(filename);
+        const module = await importWithRetry(filename);
 
-            // 假設每個題庫 module export default 一個物件
+        if (module) {
             questions.push(module.default);
             console.log(`Loaded: ${filename}`);
-
-            // 成功載入，重置連續失敗計數
             consecutiveFailures = 0;
-
-        } catch (error) {
-            // 載入失敗，我們不馬上 break，而是增加失敗計數
-            // console.warn(`Failed to load q${idStr}.js (might be missing)`);
+        } else {
+            // 載入不到，先記下來，連續失敗夠多次才認定題庫已經結束
+            failedIndexes.push(index);
             consecutiveFailures++;
 
-            if (consecutiveFailures >= maxConsecutiveFailures) {
-                console.log(`Stopped loading after ${maxConsecutiveFailures} consecutive missing files.`);
+            if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+                console.log(`Stopped loading after ${MAX_CONSECUTIVE_FAILURES} consecutive missing files.`);
                 break;
             }
         }
         index++;
+    }
+
+    // 結尾那幾個連續失敗是「題庫到此為止」，中間的失敗才是真的漏題
+    const missingCount = Math.max(0, failedIndexes.length - consecutiveFailures);
+    questions.missing = failedIndexes
+        .slice(0, missingCount)
+        .map(i => `q${i.toString().padStart(3, '0')}`);
+
+    if (questions.missing.length > 0) {
+        console.warn(`題庫 ${questionBank} 有題目載入失敗（重試後仍失敗）:`, questions.missing.join(', '));
     }
 
     return questions;

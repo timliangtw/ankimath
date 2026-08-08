@@ -61,7 +61,29 @@ function getBankFromUrl() {
 async function loadQuestionBank(bank) {
     currentQuestionBank = normalizeQuestionBank(bank);
     defaultQuestions = await loadQuestions(currentQuestionBank);
+    renderLoadWarning(defaultQuestions.missing || []);
     console.log(`Total questions loaded for ${currentQuestionBank}:`, defaultQuestions.length);
+}
+
+// 題目檔案載入失敗（重試後仍失敗）時，在首頁明確告知，不要靜默少題
+function renderLoadWarning(missing) {
+    const existing = document.getElementById('load-warning');
+
+    if (!missing.length) {
+        if (existing) existing.remove();
+        return;
+    }
+
+    const container = document.querySelector('#home-page .container');
+    if (!container) return;
+
+    const el = existing || document.createElement('p');
+    if (!existing) {
+        el.id = 'load-warning';
+        el.style.cssText = 'margin-top:16px; font-size:0.85rem; color:#b91c1c; font-weight:bold; line-height:1.6;';
+        container.appendChild(el);
+    }
+    el.innerText = `⚠️ 有 ${missing.length} 題沒有載入成功（${missing.join('、')}），請檢查網路後重新整理。`;
 }
 
 function buildInitialCard(defaultQ, savedCard = null) {
