@@ -8,8 +8,21 @@
  * 5. 全程無 JS console 錯誤
  */
 
-import pkg from '/Users/tim_liang/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/.pnpm/playwright@1.60.0/node_modules/playwright/index.js';
+import fs from 'fs';
+import pkg from '/Users/tim_liang/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.js';
 const { chromium } = pkg;
+
+// playwright 版本會隨 runtime 更新，瀏覽器則留在舊的 build 目錄，這裡動態找目前裝好的 chromium
+function findChromium() {
+    const root = `${process.env.HOME}/Library/Caches/ms-playwright`;
+    try {
+        const dir = fs.readdirSync(root)
+            .filter(d => /^chromium-\d+$/.test(d))
+            .sort((a, b) => Number(b.split('-')[1]) - Number(a.split('-')[1]))[0];
+        if (dir) return `${root}/${dir}/chrome-mac-x64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing`;
+    } catch (e) { /* 沒有 ms-playwright 快取就退回系統 Chrome */ }
+    return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+}
 
 const BASE_URL = process.env.BASE_URL || 'https://timliangtw.github.io/ankimath/';
 const URL = `${BASE_URL}?debug&bank=${process.env.BANK || 'brother'}`;
@@ -61,7 +74,7 @@ async function getQuestionIds(page) {
 
 const browser = await chromium.launch({
     headless: true,
-    executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+    executablePath: findChromium()
 });
 const jsErrors = [];
 
