@@ -10,6 +10,15 @@ let currentCard = null;
 let defaultQuestions = [];
 let currentProfileId = null;
 let currentQuestionBank = 'brother';
+let availableProfiles = [];   // 首頁下拉可以切換的使用者
+let isSwitchingProfile = false;
+
+// 首頁下拉只列出這幾個固定帳號（名稱要完全相同，避免撈到大小寫不同的重複帳號）
+const ALLOWED_PROFILES = [
+    { name: 'Leo', label: 'Leo（哥哥）' },
+    { name: 'Natasha', label: 'Natasha（妹妹）' },
+    { name: 'test', label: '測試帳號' }
+];
 let isRating = false; // 防止評分按鈕重複點擊
 let previewRoot = null; // 追蹤預覽頁的 React root，避免 createRoot 重複警告
 let studyRoot = null;   // 追蹤學習頁的 React root
@@ -87,6 +96,7 @@ async function initApp() {
             await loadQuestionBank(getBankFromUrl());
             cards = defaultQuestions.map(defaultQ => buildInitialCard(defaultQ));
             updateHomeStats();
+            renderProfileSelector();
             loadingEl.style.display = 'none';
             return;
         }
@@ -108,17 +118,16 @@ async function initApp() {
         }
 
         // 3. 處理使用者 Profile
-        // 檢查 LocalStorage 是否有上次登入的 ID
-        const lastProfileId = localStorage.getItem('lastProfileId');
-
         loadingMsg.innerText = "讀取使用者資料...";
         const profiles = await getAllProfiles();
+        availableProfiles = pickAllowedProfiles(profiles);
 
-        if (profiles.length === 0) {
-            // 沒有任何使用者 -> 創建第一個
-            const name = prompt("歡迎！請輸入你的名字 (例如: 這裡輸入小孩名字):", "小明");
+        if (availableProfiles.length === 0) {
+            // 雲端還沒有任何預設帳號 -> 建立第一個
+            const name = prompt("找不到預設帳號，請輸入名字建立新帳號:", ALLOWED_PROFILES[0].name);
             if (name) {
                 const newInfo = await createProfile(name);
+                availableProfiles = pickAllowedProfiles(await getAllProfiles());
                 await loginProfile(newInfo.id);
             } else {
                 alert("必須輸入名字才能開始！");
@@ -126,29 +135,13 @@ async function initApp() {
                 return;
             }
         } else {
-            // 有使用者
-            if (lastProfileId && profiles.find(p => p.id === lastProfileId)) {
-                // 自動登入上次的使用者
-                await loginProfile(lastProfileId);
-            } else {
-                // 顯示選擇與建立介面 (簡單用 prompt/confirm 或是自製 UI)
-                // 這裡為了簡化，如果找不到上次的，就列出名字讓使用者輸入，或是輸入新名字
-                const inputName = prompt("請輸入你的名字以登入，或輸入新名字建立新帳號:");
-
-                if (!inputName) {
-                    alert("請重新整理並輸入名字");
-                    return;
-                }
-
-                const existing = profiles.find(p => p.name === inputName);
-                if (existing) {
-                    await loginProfile(existing.id);
-                } else {
-                    const newInfo = await createProfile(inputName);
-                    await loginProfile(newInfo.id);
-                }
-            }
+            // 沿用上次選的使用者，沒有就用第一個
+            const lastProfileId = localStorage.getItem('lastProfileId');
+            const target = availableProfiles.find(p => p.id === lastProfileId) || availableProfiles[0];
+            await loginProfile(target.id);
         }
+
+        renderProfileSelector();
 
         // 移除 Loading
         loadingEl.style.display = 'none';
@@ -198,6 +191,62 @@ async function loginProfile(profileId) {
 
     console.log(`User ${profileId} loaded ${currentQuestionBank} with ${cards.length} cards.`);
     updateHomeStats();
+    renderProfileSelector();
+}
+
+// --- 使用者切換（首頁下拉選單） ---
+
+// 只挑出白名單裡的帳號；同名有多筆時取進度最多的那一筆
+function pickAllowedProfiles(profiles) {
+    return ALLOWED_PROFILES.map(allowed => {
+        const matches = profiles.filter(p => (p.name || '') === allowed.name);
+        if (matches.length === 0) return null;
+        const best = matches.reduce((a, b) => ((b.cards || []).length > (a.cards || []).length ? b : a));
+        return { id: best.id, name: best.name, label: allowed.label };
+    }).filter(Boolean);
+}
+
+function renderProfileSelector() {
+    const select = document.getElementById('profile-select');
+    if (!select) return;
+
+    if (currentProfileId === 'debug_user') {
+        select.innerHTML = '<option value="debug_user">Debug 模式</option>';
+        select.disabled = true;
+        return;
+    }
+
+    const options = [...availableProfiles];
+    // 目前帳號不在白名單裡（例如手動建立的舊帳號）也要能顯示
+    if (currentProfileId && !options.some(p => p.id === currentProfileId)) {
+        options.unshift({ id: currentProfileId, name: currentProfileId, label: currentProfileId });
+    }
+
+    select.innerHTML = options
+        .map(p => `<option value="${p.id}">${p.label}</option>`)
+        .join('');
+    if (currentProfileId) select.value = currentProfileId;
+    select.disabled = isSwitchingProfile || options.length <= 1;
+    select.onchange = () => switchProfile(select.value);
+}
+
+async function switchProfile(profileId) {
+    if (!profileId || profileId === currentProfileId || isSwitchingProfile) return;
+
+    const select = document.getElementById('profile-select');
+    isSwitchingProfile = true;
+    if (select) select.disabled = true;
+
+    try {
+        await loginProfile(profileId);
+        goHome();
+    } catch (e) {
+        console.error("切換使用者失敗:", e);
+        alert("切換使用者失敗，請再試一次。");
+    } finally {
+        isSwitchingProfile = false;
+        renderProfileSelector();
+    }
 }
 
 // 存檔 (同步到 Firestore)
@@ -445,18 +494,21 @@ function renderQuestionList() {
     const listContainer = document.getElementById('question-list');
     listContainer.innerHTML = '';
 
-    // 插入切換使用者按鈕
+    // 顯示目前使用者資訊（切換使用者已移到首頁的下拉選單）
+    const currentLabel = currentProfileId === 'debug_user'
+        ? 'Debug 模式'
+        : (availableProfiles.find(p => p.id === currentProfileId)?.label || currentProfileId || '未知');
+
     const userControlDiv = document.createElement('div');
     userControlDiv.style.padding = '10px';
     userControlDiv.style.marginBottom = '20px';
     userControlDiv.style.background = '#f0f9ff';
     userControlDiv.style.borderRadius = '10px';
     userControlDiv.innerHTML = `
-        <p style="margin:0 0 10px 0; color:#444;">目前使用者: <b>${currentProfileId || '未知'}</b></p>
-        <p style="margin:0 0 10px 0; color:#666; font-size:0.9rem;">目前題庫: <b>${currentQuestionBank}</b></p>
-        <button class="btn btn-neutral" style="font-size:0.9rem; padding: 5px 15px;">登出 / 切換使用者</button>
+        <p style="margin:0 0 6px 0; color:#444;">目前使用者: <b>${currentLabel}</b></p>
+        <p style="margin:0 0 6px 0; color:#666; font-size:0.9rem;">目前題庫: <b>${currentQuestionBank}</b></p>
+        <p style="margin:0; color:#999; font-size:0.85rem;">要換人請回首頁，用上方的下拉選單切換。</p>
     `;
-    userControlDiv.querySelector('button').onclick = logout;
     listContainer.appendChild(userControlDiv);
 
     cards.sort((a, b) => (typeof a.id === 'string' ? a.id.localeCompare(b.id) : a.id - b.id)).forEach(card => {
@@ -557,6 +609,7 @@ window.openSettings = openSettings;
 window.previewQuestion = previewQuestion;
 window.backToSettings = backToSettings;
 window.logout = logout;
+window.switchProfile = switchProfile;
 
 // 顯示版本號
 document.getElementById('app-version').textContent = VERSION;
