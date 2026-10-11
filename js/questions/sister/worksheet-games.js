@@ -34,7 +34,30 @@ function pizza(mask, remaining=false) {
     </g>`);
 }
 
-function countDiagram(kind) {
+export function countedShapes(kind) {
+    const rectangle=(x,y,w,h)=>`M${x} ${y}h${w}v${h}h${-w}Z`;
+    if(kind==='square') return [
+        ...[10,65].flatMap(y=>[150,205].map(x=>rectangle(x,y,55,55))),
+        ...[10,120].flatMap(y=>[40,150].map(x=>rectangle(x,y,110,110))),
+        rectangle(40,10,220,220)
+    ];
+    if(kind==='triangle') return ['M150 10L85 101H215Z','M150 10L50 150H250Z',
+        'M150 80L135 101H165Z','M150 80L100 150H200Z','M150 80L50 220H250Z'];
+    if(kind==='rectangle') {
+        const levels=[35,85,135,185];
+        return [...levels.flatMap((y,i)=>levels.slice(i+1).map(end=>rectangle(60,y,180,end-y))),
+            rectangle(20,35,40,100),rectangle(20,35,220,100),
+            rectangle(240,85,40,100),rectangle(60,85,220,100)];
+    }
+    return [0,Math.PI/2,Math.PI/4].flatMap(angle=>[angle,angle+Math.PI].map(a=>
+        `M${150+100*Math.cos(a)} ${120+100*Math.sin(a)} A100 100 0 0 1 ${150-100*Math.cos(a)} ${120-100*Math.sin(a)} Z`));
+}
+
+function countDiagram(kind, highlight=null, compact=false) {
+    if(highlight!==null) return html`<svg viewBox="0 0 300 240" className="w-full" style=${{maxHeight:compact?'140px':'420px'}}>
+        <g opacity=".3">${countDiagram(kind).props.children}</g>
+        <path d=${countedShapes(kind)[highlight]} fill="#06b6d4" fillOpacity=".2" stroke="#0891b2" strokeWidth="5" strokeLinejoin="round" />
+    </svg>`;
     if(kind==='square') return svg(html`<g fill="none" stroke="#2563eb" strokeWidth="4"><rect x="40" y="10" width="220" height="220" /><path d="M150 10V230 M40 120H260 M205 10V120 M150 65H260" /></g>`);
     if(kind==='triangle') return svg(html`<g fill="none" stroke="#db2777" strokeWidth="4"><path d="M150 10L50 150H250Z M150 80L50 220H250Z M85 101H215" /></g>`);
     if(kind==='rectangle') return svg(html`<g fill="none" stroke="#ea580c" strokeWidth="4"><rect x="20" y="35" width="220" height="100" /><rect x="60" y="85" width="220" height="100" /><path d="M60 35V185 M240 35V185" /></g>`);
@@ -84,7 +107,8 @@ export function worksheetQuestion(id,kind,title) {
         const [problem,setProblem]=useState(()=>generateWorksheet(kind));
         const [value,setValue]=useState('');
         const [state,setState]=useState('playing');
-        const next=()=>{setProblem(generateWorksheet(kind));setValue('');setState('playing');};
+        const [activeShape,setActiveShape]=useState(0);
+        const next=()=>{setProblem(generateWorksheet(kind));setValue('');setState('playing');setActiveShape(0);};
         const submit=answer=>{
             if(state==='correct') return;
             if(answer===problem.answer) setState('correct');
@@ -93,7 +117,7 @@ export function worksheetQuestion(id,kind,title) {
         const button=(content,answer,key)=>html`<button key=${key} disabled=${state==='correct'} onClick=${()=>submit(answer)} className=${`border-2 rounded-lg p-2 ${state==='correct'&&answer===problem.answer?'border-green-500 bg-green-100':'border-blue-200 bg-white hover:bg-blue-50'}`}>${content}</button>`;
         let question,body,explanation;
         if(kind==='count') {
-            question=`圖中一共有幾個${problem.label}？`; body=countDiagram(problem.type);
+            question=`圖中一共有幾個${problem.label}？`; body=countDiagram(problem.type,state==='correct'?activeShape:null);
             explanation={semicircle:'每條直徑把圓分成兩個半圓，共有 3 條直徑：3 × 2 = 6 個半圓。',square:'小正方形 4 個，四分之一大小的正方形 4 個，最外面 1 個：4 + 4 + 1 = 9。',triangle:'上面的三角形有 2 個，下面的三角形有 3 個：2 + 3 = 5。',rectangle:'中間寬的一區有 6 個長方形，加上左右各 2 個：6 + 2 + 2 = 10。'}[problem.type];
         } else if(kind==='cubes'||kind==='blocks') {
             question='一共有幾塊積木？';body=cubes(problem.heights,problem.color);
@@ -121,6 +145,15 @@ export function worksheetQuestion(id,kind,title) {
             ${numeric&&html`<form onSubmit=${event=>{event.preventDefault();submit(value.trim()===''?null:Number(value));}} className="flex justify-center gap-3 my-4"><input aria-label="答案" type="number" min="0" value=${value} onChange=${event=>setValue(event.target.value)} disabled=${state==='correct'} className="w-24 border-2 rounded-lg p-2 text-xl text-center" /><button disabled=${state==='correct'} className="bg-blue-500 text-white rounded-lg px-5">送出</button></form>`}
             ${state==='wrong'&&html`<p role="status" className="text-red-600 my-4">再觀察一次，還可以繼續作答。</p>`}
             ${state==='correct'&&html`<div role="status" className="text-green-700 my-4"><strong className="text-xl">答對了！</strong><p className="mt-2">${explanation}</p>${numeric&&html`<strong className="text-2xl">${problem.answer}</strong>`}</div>`}
+            ${kind==='count'&&state==='correct'&&html`<section aria-label="圖形逐個講解">
+                <p className="font-bold my-3">第 ${activeShape+1} 個${problem.label}（共 ${problem.answer} 個）</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">${countedShapes(problem.type).map((shape,i)=>html`
+                    <button key=${i} type="button" aria-label=${`第 ${i+1} 個${problem.label}`} aria-pressed=${activeShape===i}
+                        onClick=${()=>setActiveShape(i)} className="border-2 rounded-lg p-2"
+                        style=${{borderColor:activeShape===i?'#0891b2':'#d1d5db',background:activeShape===i?'#ecfeff':'white',minHeight:'48px'}}>
+                        ${countDiagram(problem.type,i,true)}<strong>${i+1}</strong>
+                    </button>`)}</div>
+            </section>`}
             <button onClick=${next} className="my-4 border border-blue-300 text-blue-700 rounded-lg px-5 py-2">再試一題（換圖）</button>
         </div>`;
     };

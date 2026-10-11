@@ -147,6 +147,8 @@ function getPracticeLabel() {
 const Grid = ({ children, muted = false }) => html`
     <svg
         viewBox=${`0 0 ${VIEW.width} ${VIEW.height}`}
+        preserveAspectRatio="none"
+        style=${{height:'clamp(300px, 44vh, 480px)',display:'block'}}
         className=${`w-full rounded-2xl border-2 bg-white ${muted ? 'border-slate-200' : 'border-lime-200'}`}
     >
         ${[0, 1, 2, 3].map(row => html`
@@ -186,6 +188,8 @@ const DrawingBoard = ({ points, boardRef, onStart, onMove, onEnd, gameState }) =
         >
             <svg
                 viewBox=${`0 0 ${VIEW.width} ${VIEW.height}`}
+                preserveAspectRatio="none"
+                style=${{height:'clamp(300px, 44vh, 480px)',display:'block'}}
                 className="w-full rounded-2xl border-2 border-blue-200 bg-white pointer-events-none"
             >
                 ${[0, 1, 2, 3].map(row => html`
@@ -344,7 +348,7 @@ const TracePathGame = () => {
     };
 
     return html`
-        <div className="w-full font-sans text-left mx-auto max-w-2xl">
+        <div className="w-full font-sans text-left mx-auto" style=${{maxWidth:'800px'}}>
             <div className="text-center mb-5">
                 <div className="inline-block bg-lime-600 text-white px-4 py-1 rounded-full font-bold shadow-sm mb-3">
                     描一描

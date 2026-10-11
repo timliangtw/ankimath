@@ -23,8 +23,8 @@ const Game=()=>{
         const ok=drawn.length>15 && sample.every(p=>near(p,drawn)<14) && drawn.every(p=>near(p,sample)<22);
         setState(ok?'correct':'wrong');if(!ok&&window.onIncorrectAnswer)window.onIncorrectAnswer();
     };
-    return html`<div className="max-w-2xl mx-auto text-center"><h2 className="text-xl font-bold mb-3">聖誕樹：畫出另一半</h2><p className="mb-3">沿中間的對稱線，在右邊畫出一樣的樹形和裝飾。</p>
-        <svg ref=${board} viewBox="0 0 400 300" className="w-full border rounded-lg bg-white" style=${{touchAction:'none'}}
+    return html`<div className="w-full mx-auto text-center" style=${{maxWidth:'800px'}}><h2 className="text-xl font-bold mb-3">聖誕樹：畫出另一半</h2><p className="mb-3">沿中間的對稱線，在右邊畫出一樣的樹形和裝飾。</p>
+        <svg ref=${board} viewBox="0 0 400 300" preserveAspectRatio="none" className="w-full border rounded-lg bg-white" style=${{touchAction:'none',height:'clamp(420px, 62vh, 660px)',display:'block'}}
             onPointerDown=${e=>{if(state==='correct')return;e.currentTarget.setPointerCapture(e.pointerId);active.current=true;const p=locate(e);setPoints(prev=>[...prev,null,p]);setState('playing');}}
             onPointerMove=${e=>{if(active.current){const p=locate(e);setPoints(prev=>[...prev,p]);}}}
             onPointerUp=${()=>{active.current=false;}} onPointerCancel=${()=>{active.current=false;}}>

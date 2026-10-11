@@ -75,8 +75,8 @@ const MapBoard = ({ houses, route, showRoute, progress, onPick, gameState }) => 
                     return html`<div key=${i} className="absolute" style=${style}>${inner}</div>`;
                 }
                 return html`
-                    <button key=${i} className="absolute active:scale-90 transition-transform"
-                        style=${style} onClick=${() => onPick(i)}
+                    <button key=${i} className="absolute flex items-center justify-center active:scale-90 transition-transform"
+                        style=${{...style,minWidth:'56px',minHeight:'56px'}} onClick=${() => onPick(i)}
                         disabled=${gameState === 'correct'}>
                         ${inner}
                     </button>
@@ -118,7 +118,7 @@ const MailRouteGame = () => {
     const { houses, route } = problem;
 
     return html`
-        <div className="w-full font-sans text-left mx-auto max-w-2xl">
+        <div className="w-full font-sans text-left mx-auto" style=${{maxWidth:'800px'}}>
             <div className="text-center mb-4">
                 <div className="inline-block bg-orange-500 text-white px-4 py-1 rounded-full font-bold shadow-sm mb-3">
                     送郵件
